@@ -10,7 +10,7 @@ Improvements in v1.1:
   - Robust YAML frontmatter parser for multi-line descriptions
 
 Usage:
-    python3 atsm.py rank "task description"
+    python3 atsm.py rank [--dedup] "task description"
     python3 atsm.py record <skill_name> <0|1>
     python3 atsm.py stats
     python3 atsm.py benchmark
@@ -248,29 +248,40 @@ def parse_frontmatter(content: str) -> dict:
 
 
 # --- Skill loading ---
-def load_skills() -> list[dict]:
-    """Load all skills with their descriptions and categories (cached)."""
+def load_skills(dedup: bool = True) -> list[dict]:
+    """Load all skills with their descriptions and categories (cached).
+
+    Args:
+        dedup: If True, deduplicate skills by name (keep first encountered).
+    """
     cached, current_mtime = _cache.get_skills()
     if cached is not None:
         return cached
-    
+
     skills = []
     if not SKILLS_ROOT.exists():
         return skills
-    
+
+    seen_names = set()
     for skill_dir in SKILLS_ROOT.rglob("SKILL.md"):
         try:
             content = skill_dir.read_text(encoding="utf-8", errors="replace")
             name = skill_dir.parent.name
             description = ""
-            
+
             if content.startswith("---"):
                 fm = parse_frontmatter(content)
                 if "name" in fm:
                     name = fm["name"]
                 if "description" in fm:
                     description = fm["description"]
-            
+
+            # Deduplicate by skill name (keep first encountered)
+            if dedup:
+                if name in seen_names:
+                    continue
+                seen_names.add(name)
+
             skills.append({
                 "name": name,
                 "description": description,
@@ -279,7 +290,7 @@ def load_skills() -> list[dict]:
             })
         except Exception:
             continue
-    
+
     _cache.set_skills(skills, current_mtime)
     return skills
 
@@ -363,14 +374,19 @@ def compute_stats(records: list[dict]) -> dict[str, dict]:
 
 
 # --- Ranking ---
-def rank_skills(task: str, top_k: int = 10) -> tuple[list[dict], float]:
+def rank_skills(task: str, top_k: int = 10, dedup: bool = True) -> tuple[list[dict], float]:
     """Rank skills by relevance and expected success for a task.
+    
+    Args:
+        task: Task description to rank against.
+        top_k: Number of top results to return.
+        dedup: If True, deduplicate skills by name (keep first encountered).
     
     Returns (results, elapsed_seconds).
     """
     start = time.time()
     
-    skills = load_skills()
+    skills = load_skills(dedup=dedup)
     if not skills:
         return [], time.time() - start
     
@@ -423,10 +439,19 @@ def main():
     
     if command == "rank":
         if len(sys.argv) < 3:
-            print("Usage: atsm.py rank <task description>")
+            print("Usage: atsm.py rank [--dedup] <task description>")
             sys.exit(1)
-        task = " ".join(sys.argv[2:])
-        results, elapsed = rank_skills(task)
+        # Check for --dedup flag
+        dedup = True
+        task_args = sys.argv[2:]
+        if "--dedup" in task_args:
+            dedup = True
+            task_args.remove("--dedup")
+        elif "--no-dedup" in task_args:
+            dedup = False
+            task_args.remove("--no-dedup")
+        task = " ".join(task_args)
+        results, elapsed = rank_skills(task, dedup=dedup)
         if not results:
             print("No skills found.")
             return

@@ -3,73 +3,263 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ATSM Desktop Visualizer</title>
+<title>ATSM Live Agent Dashboard</title>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
+:root {
+  /* Dark theme (default) */
+  --bg-primary: #0a0e17;
+  --bg-secondary: #0d1321;
+  --bg-tertiary: #1a2035;
+  --bg-input: #1e293b;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-active: #1d4ed8;
+  --border: #2a3447;
+  --border-input: #334155;
+  --glow: #7dd3fc;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #ef4444;
+  --purple: #c084fc;
+  --overlay: rgba(0,0,0,0.6);
+  --shadow: rgba(0,0,0,0.5);
+  --legend-bg: rgba(13, 19, 33, 0.9);
+  --status-bg: rgba(13, 19, 33, 0.9);
+  --banner-bg: linear-gradient(135deg, #1e3a5f 0%, #0d1321 100%);
+  --banner-text: #7dd3fc;
+  --node-stroke: #1e293b;
+  --edge-color: #4a5568;
+  --panel-bg: #0d1321;
+  --detail-bg: #0a0f1a;
+  --graph-bg: radial-gradient(ellipse at center, #0f172a 0%, #020617 100%);
+  --badge-score-bg: #1e3a5f;
+  --badge-score-text: #7dd3fc;
+  --badge-success-bg: #1a3a2e;
+  --badge-success-text: #4ade80;
+  --badge-rel-bg: #2d2a1a;
+  --badge-rel-text: #fbbf24;
+  --badge-obs-bg: #2a1a2e;
+  --badge-obs-text: #c084fc;
+  --log-entry-bg: #1a2035;
+  --log-time: #64748b;
+  --log-action: #7dd3fc;
+  --log-skill: #4ade80;
+  --pulse-ring: #3b82f6;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-input: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-active: #1d4ed8;
+  --border: #e2e8f0;
+  --border-input: #cbd5e1;
+  --glow: #0369a1;
+  --success: #16a34a;
+  --warning: #ca8a04;
+  --danger: #dc2626;
+  --purple: #9333ea;
+  --overlay: rgba(0,0,0,0.3);
+  --shadow: rgba(0,0,0,0.1);
+  --legend-bg: rgba(255, 255, 255, 0.95);
+  --status-bg: rgba(255, 255, 255, 0.95);
+  --banner-bg: linear-gradient(135deg, #dbeafe 0%, #ffffff 100%);
+  --banner-text: #0369a1;
+  --node-stroke: #cbd5e1;
+  --edge-color: #94a3b8;
+  --panel-bg: #ffffff;
+  --detail-bg: #f8fafc;
+  --graph-bg: radial-gradient(ellipse at center, #f1f5f9 0%, #e2e8f0 100%);
+  --badge-score-bg: #dbeafe;
+  --badge-score-text: #0369a1;
+  --badge-success-bg: #dcfce7;
+  --badge-success-text: #16a34a;
+  --badge-rel-bg: #fef9c3;
+  --badge-rel-text: #ca8a04;
+  --badge-obs-bg: #f3e8ff;
+  --badge-obs-text: #9333ea;
+  --log-entry-bg: #f1f5f9;
+  --log-time: #94a3b8;
+  --log-action: #0369a1;
+  --log-skill: #16a34a;
+  --pulse-ring: #3b82f6;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: 'Segoe UI', -apple-system, sans-serif;
-  background: #0a0e17;
-  color: #e0e6f0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: background 0.3s, color 0.3s;
 }
+
+/* ===== CURRENT TASK BANNER ===== */
+.task-banner {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+  background: var(--banner-bg);
+  border-bottom: 1px solid var(--border);
+  z-index: 20;
+  animation: slideDown 0.3s ease-out;
+}
+.task-banner.active { display: flex; }
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.task-banner .task-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: spin 2s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.task-banner .task-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: white;
+}
+.task-banner .task-info { flex: 1; }
+.task-banner .task-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.task-banner .task-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--banner-text);
+}
+.task-banner .task-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.task-banner .task-close:hover { background: var(--bg-tertiary); }
+
+/* ===== HEADER ===== */
 .header {
-  background: linear-gradient(135deg, #1a1f2e 0%, #0d1321 100%);
+  background: var(--bg-secondary);
   padding: 12px 24px;
   display: flex;
   align-items: center;
   gap: 16px;
-  border-bottom: 1px solid #2a3447;
+  border-bottom: 1px solid var(--border);
   z-index: 10;
 }
 .header h1 {
   font-size: 18px;
   font-weight: 600;
-  color: #7dd3fc;
+  color: var(--glow);
   margin: 0;
   white-space: nowrap;
 }
 .header .subtitle {
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 .input-group {
   display: flex;
   align-items: center;
   gap: 8px;
   flex: 1;
-  max-width: 700px;
+  max-width: 600px;
 }
 .input-group input {
   flex: 1;
   padding: 8px 16px;
   border-radius: 8px;
-  border: 1px solid #334155;
-  background: #1e293b;
-  color: #e2e8f0;
+  border: 1px solid var(--border-input);
+  background: var(--bg-input);
+  color: var(--text-primary);
   font-size: 13px;
   outline: none;
   transition: border-color 0.2s;
 }
-.input-group input:focus {
-  border-color: #3b82f6;
+.input-group input:focus { border-color: var(--accent); }
+
+/* ===== TOGGLE BUTTONS ===== */
+.toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.input-group button {
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-input);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.toggle-btn:hover { border-color: var(--accent); }
+.toggle-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+.toggle-btn .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: background 0.2s;
+}
+.toggle-btn.active .dot { background: var(--success); animation: pulse-dot 1.5s infinite; }
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.input-group button.primary {
   padding: 8px 20px;
   border-radius: 8px;
   border: none;
-  background: #3b82f6;
+  background: var(--accent);
   color: white;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
 }
-.input-group button:hover { background: #2563eb; }
-.input-group button:active { background: #1d4ed8; }
+.input-group button.primary:hover { background: var(--accent-hover); }
+.input-group button.primary:active { background: var(--accent-active); }
+
+/* ===== MAIN CONTAINER ===== */
 .main-container {
   display: flex;
   flex: 1;
@@ -78,79 +268,131 @@ body {
 .graph-container {
   flex: 1;
   position: relative;
-  background: radial-gradient(ellipse at center, #0f172a 0%, #020617 100%);
+  background: var(--graph-bg);
 }
-.graph-container svg {
-  width: 100%;
-  height: 100%;
-}
+.graph-container svg { width: 100%; height: 100%; }
+
+/* ===== SIDE PANEL ===== */
 .side-panel {
   width: 360px;
-  background: #0d1321;
-  border-left: 1px solid #2a3447;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 .panel-header {
   padding: 16px;
-  border-bottom: 1px solid #2a3447;
+  border-bottom: 1px solid var(--border);
   font-size: 14px;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--text-secondary);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 .panel-header .refresh-indicator {
   font-size: 11px;
-  color: #4ade80;
+  color: var(--success);
   animation: pulse 2s infinite;
 }
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+
+/* ===== MINI LOG ===== */
+.mini-log {
+  border-bottom: 1px solid var(--border);
+  max-height: 180px;
+  overflow-y: auto;
+  background: var(--bg-primary);
+}
+.mini-log-header {
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mini-log-header .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+.mini-log-header .live-dot.active {
+  background: var(--success);
+  animation: pulse-dot 1.5s infinite;
+}
+.log-entry {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  transition: background 0.2s;
+}
+.log-entry:hover { background: var(--log-entry-bg); }
+.log-entry .log-time {
+  color: var(--log-time);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.log-entry .log-text { flex: 1; }
+.log-entry .log-action { color: var(--log-action); font-weight: 500; }
+.log-entry .log-skill { color: var(--log-skill); font-weight: 600; }
+.log-entry .log-empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ===== RANKED LIST ===== */
 .ranked-list {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
 }
 .ranked-list::-webkit-scrollbar { width: 6px; }
-.ranked-list::-webkit-scrollbar-track { background: #0d1321; }
-.ranked-list::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+.ranked-list::-webkit-scrollbar-track { background: var(--bg-secondary); }
+.ranked-list::-webkit-scrollbar-thumb { background: var(--border-input); border-radius: 3px; }
 .rank-item {
   padding: 10px 14px;
   margin-bottom: 6px;
-  background: #1a2035;
+  background: var(--bg-tertiary);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
   border: 1px solid transparent;
 }
 .rank-item:hover {
-  background: #1e293b;
-  border-color: #334155;
+  background: var(--bg-input);
+  border-color: var(--border-input);
   transform: translateX(2px);
 }
 .rank-item.selected {
-  border-color: #3b82f6;
-  background: #1e293b;
+  border-color: var(--accent);
+  background: var(--bg-input);
 }
 .rank-item .rank-number {
   font-size: 11px;
   font-weight: 700;
-  color: #3b82f6;
+  color: var(--accent);
   margin-right: 8px;
 }
 .rank-item .skill-name {
   font-size: 13px;
   font-weight: 500;
-  color: #e2e8f0;
+  color: var(--text-primary);
 }
 .rank-item .skill-desc {
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-muted);
   margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -158,9 +400,10 @@ body {
 }
 .rank-item .skill-meta {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   margin-top: 6px;
   font-size: 10px;
+  flex-wrap: wrap;
 }
 .rank-item .skill-meta span {
   display: flex;
@@ -174,35 +417,35 @@ body {
   font-weight: 600;
   text-transform: uppercase;
 }
-.badge-score { background: #1e3a5f; color: #7dd3fc; }
-.badge-success { background: #1a3a2e; color: #4ade80; }
-.badge-rel { background: #2d2a1a; color: #fbbf24; }
-.badge-obs { background: #2a1a2e; color: #c084fc; }
+.badge-score { background: var(--badge-score-bg); color: var(--badge-score-text); }
+.badge-success { background: var(--badge-success-bg); color: var(--badge-success-text); }
+.badge-rel { background: var(--badge-rel-bg); color: var(--badge-rel-text); }
+.badge-obs { background: var(--badge-obs-bg); color: var(--badge-obs-text); }
 
-/* Node tooltip */
+/* ===== NODE TOOLTIP ===== */
 .node-tooltip {
   position: absolute;
   pointer-events: none;
-  background: #1e293b;
-  border: 1px solid #475569;
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
   border-radius: 6px;
   padding: 8px 12px;
   font-size: 12px;
-  color: #e2e8f0;
+  color: var(--text-primary);
   max-width: 250px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 20px var(--shadow);
   z-index: 100;
   display: none;
 }
-.node-tooltip .tip-name { font-weight: 600; color: #7dd3fc; margin-bottom: 4px; }
-.node-tooltip .tip-detail { color: #94a3b8; font-size: 11px; }
+.node-tooltip .tip-name { font-weight: 600; color: var(--glow); margin-bottom: 4px; }
+.node-tooltip .tip-detail { color: var(--text-secondary); font-size: 11px; }
 
-/* Detail panel */
+/* ===== DETAIL PANEL ===== */
 .detail-panel {
   padding: 16px;
-  border-top: 1px solid #2a3447;
-  background: #0a0f1a;
-  max-height: 250px;
+  border-top: 1px solid var(--border);
+  background: var(--detail-bg);
+  max-height: 320px;
   overflow-y: auto;
   display: none;
 }
@@ -210,12 +453,12 @@ body {
 .detail-panel h3 {
   font-size: 14px;
   font-weight: 600;
-  color: #7dd3fc;
+  color: var(--glow);
   margin-bottom: 8px;
 }
 .detail-panel p {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-secondary);
   line-height: 1.5;
   margin-bottom: 8px;
 }
@@ -226,65 +469,120 @@ body {
   margin-top: 8px;
 }
 .stat-box {
-  background: #1a2035;
+  background: var(--bg-tertiary);
   padding: 8px 10px;
   border-radius: 6px;
 }
 .stat-box .stat-label {
   font-size: 9px;
-  color: #64748b;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 .stat-box .stat-value {
   font-size: 16px;
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--text-primary);
   margin-top: 2px;
 }
+.outcome-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.outcome-section .outcome-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.outcome-buttons {
+  display: flex;
+  gap: 8px;
+}
+.outcome-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-input);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.outcome-btn:hover { border-color: var(--accent); }
+.outcome-btn.success:hover { border-color: var(--success); background: var(--badge-success-bg); }
+.outcome-btn.failure:hover { border-color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+.outcome-btn .icon { font-size: 14px; }
+.outcome-feedback {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  display: none;
+}
+.outcome-feedback.show { display: block; }
+.outcome-feedback.success {
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
+  border: 1px solid var(--success);
+}
+.outcome-feedback.failure {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
 
-/* Legend */
+/* ===== LEGEND ===== */
 .legend {
   position: absolute;
   bottom: 16px;
   left: 16px;
-  background: rgba(13, 19, 33, 0.9);
-  border: 1px solid #334155;
+  background: var(--legend-bg);
+  border: 1px solid var(--border-input);
   border-radius: 8px;
   padding: 12px;
   font-size: 11px;
+  color: var(--text-secondary);
 }
-.legend-title { color: #94a3b8; margin-bottom: 6px; font-weight: 600; }
+.legend-title { color: var(--text-secondary); margin-bottom: 6px; font-weight: 600; }
 .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .legend-swatch { width: 16px; height: 12px; border-radius: 2px; }
 
-/* Status bar */
+/* ===== STATUS BAR ===== */
 .status-bar {
   position: absolute;
   bottom: 16px;
   right: 16px;
-  background: rgba(13, 19, 33, 0.9);
-  border: 1px solid #334155;
+  background: var(--status-bg);
+  border: 1px solid var(--border-input);
   border-radius: 6px;
   padding: 6px 12px;
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
-/* SVG Graph Elements */
+/* ===== SVG GRAPH ELEMENTS ===== */
 .node-circle {
   cursor: pointer;
-  stroke: #1e293b;
+  stroke: var(--node-stroke);
   stroke-width: 2px;
   transition: stroke 0.2s;
 }
 .node-circle:hover {
-  stroke: #3b82f6;
+  stroke: var(--accent);
   stroke-width: 3px;
 }
 .node-label {
   font-size: 10px;
-  fill: #94a3b8;
+  fill: var(--text-secondary);
   pointer-events: none;
   text-anchor: middle;
   font-weight: 500;
@@ -296,30 +594,114 @@ body {
 }
 .edge:hover { stroke-opacity: 0.8; }
 
-/* Loading state */
+/* ===== PULSE ANIMATION ===== */
+.node-pulse {
+  animation: node-pulse-anim 1s ease-out;
+}
+@keyframes node-pulse-anim {
+  0% {
+    filter: drop-shadow(0 0 0px var(--pulse-ring));
+    stroke: var(--accent);
+    stroke-width: 6px;
+  }
+  50% {
+    filter: drop-shadow(0 0 12px var(--pulse-ring));
+    stroke: var(--glow);
+    stroke-width: 8px;
+  }
+  100% {
+    filter: drop-shadow(0 0 0px transparent);
+    stroke: var(--node-stroke);
+    stroke-width: 2px;
+  }
+}
+.pulse-ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2px;
+  opacity: 0;
+  animation: pulse-ring-anim 1.5s ease-out forwards;
+}
+@keyframes pulse-ring-anim {
+  0% { r: attr(data-r); opacity: 0.8; stroke-width: 3px; }
+  100% { r: calc(attr(data-r) + 30); opacity: 0; stroke-width: 0px; }
+}
+
+/* ===== LOADING OVERLAY ===== */
 .loading-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: var(--overlay);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  color: #7dd3fc;
+  color: var(--glow);
   z-index: 50;
+}
+
+/* ===== LIVE MODE INDICATOR ===== */
+.live-indicator {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--success);
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+.live-indicator.active { display: flex; }
+.live-indicator .live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse-dot 1s infinite;
 }
 </style>
 </head>
 <body>
+
+<!-- CURRENT TASK BANNER -->
+<div class="task-banner" id="taskBanner">
+  <div class="task-icon">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+  </div>
+  <div class="task-info">
+    <div class="task-label">Agent is working on...</div>
+    <div class="task-name" id="taskBannerName">—</div>
+  </div>
+  <button class="task-close" id="taskBannerClose">&times;</button>
+</div>
+
+<!-- HEADER -->
 <div class="header">
   <h1>ATSM</h1>
-  <span class="subtitle">Adaptive Task-Skill Matching</span>
+  <span class="subtitle">Live Agent Dashboard</span>
   <div class="input-group">
-    <input type="text" id="taskInput" placeholder="Describe your task... e.g., 'search and summarize papers'" />
-    <button id="rankBtn">Rank Skills</button>
+    <input type="text" id="taskInput" placeholder="Describe task... e.g., 'search and summarize papers'" />
+    <button class="primary" id="rankBtn">Rank Skills</button>
+  </div>
+  <div class="toggle-group">
+    <button class="toggle-btn" id="themeToggle" title="Toggle dark/light theme">
+      <span class="dot"></span>
+      <span id="themeLabel">Dark</span>
+    </button>
+    <button class="toggle-btn" id="liveToggle" title="Toggle live mode">
+      <span class="dot"></span>
+      <span>Live Mode</span>
+    </button>
+    <div class="live-indicator" id="liveIndicator">
+      <span class="live-dot"></span>
+      <span>POLLING</span>
+    </div>
   </div>
 </div>
 
+<!-- MAIN CONTAINER -->
 <div class="main-container">
   <div class="graph-container" id="graphContainer">
     <svg id="graphSvg"></svg>
@@ -337,6 +719,17 @@ body {
   </div>
 
   <div class="side-panel">
+    <!-- MINI LOG -->
+    <div class="mini-log" id="miniLog">
+      <div class="mini-log-header">
+        <span class="live-dot" id="logLiveDot"></span>
+        Recent Agent Actions
+      </div>
+      <div id="logEntries">
+        <div class="log-entry"><span class="log-empty">No actions recorded yet.</span></div>
+      </div>
+    </div>
+
     <div class="panel-header">
       <span>Ranked Skills</span>
       <span class="refresh-indicator" id="refreshIndicator">● Auto</span>
@@ -350,6 +743,19 @@ body {
         <div class="stat-box"><div class="stat-label">P(success)</div><div class="stat-value" id="statSuccess"></div></div>
         <div class="stat-box"><div class="stat-label">Relevance</div><div class="stat-value" id="statRel"></div></div>
         <div class="stat-box"><div class="stat-label">Observations</div><div class="stat-value" id="statObs"></div></div>
+      </div>
+      <!-- OUTCOME RECORDING -->
+      <div class="outcome-section">
+        <div class="outcome-label">Record Outcome</div>
+        <div class="outcome-buttons">
+          <button class="outcome-btn success" id="recordSuccess">
+            <span class="icon">✓</span> Success
+          </button>
+          <button class="outcome-btn failure" id="recordFailure">
+            <span class="icon">✗</span> Failure
+          </button>
+        </div>
+        <div class="outcome-feedback" id="outcomeFeedback"></div>
       </div>
     </div>
   </div>
@@ -565,7 +971,6 @@ function rankSkills(task, skills, records, topK = 20) {
 // CO-OCCURRENCE COMPUTATION
 // ============================================================
 function computeCooccurrence(records) {
-  // Group records by time proximity (within 5 seconds) to find co-occurrence
   const sorted = [...records].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   const cooc = {};
   
@@ -584,14 +989,14 @@ function computeCooccurrence(records) {
 // D3 GRAPH RENDERING
 // ============================================================
 let simulation;
-let svg;
+let svg, g;
 let link, node, label;
 let currentRanking = [];
 let currentTask = "search and summarize papers";
-let selectedNode = null;
+let selectedNodeData = null;
+let allRecords = [...EMBEDDED_RECORDS];
 
 function getColor(score) {
-  // Red (0) -> Yellow (0.5) -> Green (1.0)
   if (score < 0.5) {
     const t = score / 0.5;
     const r = 239;
@@ -608,7 +1013,6 @@ function getColor(score) {
 }
 
 function getNodeRadius(score) {
-  // Map score to radius 8-35
   const minR = 8, maxR = 35;
   return minR + (maxR - minR) * Math.min(score * 5, 1);
 }
@@ -622,11 +1026,9 @@ function initGraph() {
     .attr('width', width)
     .attr('height', height);
   
-  // Clear previous
   svg.selectAll('*').remove();
   
-  // Add zoom/pan
-  const g = svg.append('g');
+  g = svg.append('g');
   
   svg.call(d3.zoom()
     .scaleExtent([0.2, 4])
@@ -650,7 +1052,7 @@ function initGraph() {
   label = g.append('g').attr('class', 'labels').selectAll('.node-label');
 }
 
-function updateGraph(ranking) {
+function updateGraph(ranking, pulseSkill) {
   if (!ranking || ranking.length === 0) return;
   
   const container = document.getElementById('graphContainer');
@@ -658,9 +1060,8 @@ function updateGraph(ranking) {
   const height = container.clientHeight;
   
   currentRanking = ranking;
-  const cooc = computeCooccurrence(EMBEDDED_RECORDS);
+  const cooc = computeCooccurrence(allRecords);
   
-  // Create nodes
   const nodes = ranking.map(d => ({
     id: d.name,
     data: d,
@@ -669,19 +1070,15 @@ function updateGraph(ranking) {
     y: height / 2 + (Math.random() - 0.5) * 200
   }));
   
-  // Create edges from co-occurrence and category similarity
   const links = [];
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {
       const key = [nodes[i].id, nodes[j].id].sort().join("|||");
       const weight = cooc[key] || 0;
       
-      // Also connect skills in same category
       if (nodes[i].data.category === nodes[j].data.category) {
         const catWeight = 0.5;
-        if (catWeight > 0) {
-          links.push({ source: nodes[i], target: nodes[j], weight: catWeight });
-        }
+        links.push({ source: nodes[i], target: nodes[j], weight: catWeight });
       }
       
       if (weight > 0) {
@@ -690,21 +1087,23 @@ function updateGraph(ranking) {
     }
   }
   
-  // Remove old elements
   if (simulation) simulation.stop();
-  link.selectAll('line').remove();
-  node.selectAll('circle').remove();
-  label.selectAll('text').remove();
   
-  // Draw edges
-  link = link.data(links);
-  link.enter().append('line')
+  // Edges
+  link = g.select('.edges').selectAll('.edge').data(links);
+  link.exit().remove();
+  link = link.enter().append('line')
     .attr('class', 'edge')
-    .style('stroke', '#4a5568')
-    .style('stroke-width', d => Math.max(1, d.weight * 2));
+    .style('stroke', 'var(--edge-color)')
+    .style('stroke-width', d => Math.max(1, d.weight * 2))
+    .merge(link);
   
-  // Draw nodes
-  node = node.data(nodes);
+  // Nodes
+  const oldNodes = node;
+  node = g.select('.nodes').selectAll('.node').data(nodes, d => d.id);
+  
+  node.exit().remove();
+  
   const nodeEnter = node.enter().append('g')
     .attr('class', 'node')
     .style('cursor', 'pointer');
@@ -713,39 +1112,76 @@ function updateGraph(ranking) {
     .attr('class', 'node-circle')
     .attr('r', d => d.radius)
     .style('fill', d => getColor(d.data.success_prob))
-    .style('stroke', '#1e293b')
+    .style('stroke', 'var(--node-stroke)')
     .style('stroke-width', 2);
   
   nodeEnter.append('text')
     .attr('class', 'node-label')
     .text(d => d.data.name.length > 15 ? d.data.name.substring(0, 13) + '...' : d.data.name)
     .attr('dy', d => d.radius + 12)
-    .attr('fill', '#94a3b8')
+    .attr('dy', d => d.radius + 12)
+    .attr('fill', 'var(--text-secondary)')
     .attr('font-size', '10px')
     .attr('text-anchor', 'middle')
     .style('pointer-events', 'none');
   
+  node = nodeEnter.merge(node);
+  
+  // Labels
+  const oldLabels = label;
+  label = g.select('.labels').selectAll('.node-label').data(nodes, d => d.id);
+  label.exit().remove();
+  
+  // Re-append labels merged
+  label = g.select('.labels').selectAll('text').data(nodes, d => d.id);
+  label.exit().remove();
+  
+  // Pulse effect on updated skill
+  if (pulseSkill) {
+    const pulseNode = node.select('circle').filter(d => d.id === pulseSkill);
+    if (!pulseNode.empty()) {
+      pulseNode.classed('node-pulse', true);
+      setTimeout(() => pulseNode.classed('node-pulse', false), 1500);
+      
+      // Add expanding ring
+      const nodeDatum = pulseNode.datum();
+      g.select('.nodes').append('circle')
+        .attr('class', 'pulse-ring')
+        .attr('cx', nodeDatum.x)
+        .attr('cy', nodeDatum.y)
+        .attr('r', nodeDatum.radius)
+        .attr('data-r', nodeDatum.radius)
+        .style('r', nodeDatum.radius)
+        .transition()
+        .duration(1500)
+        .style('r', nodeDatum.radius + 30)
+        .style('opacity', 0)
+        .remove();
+    }
+  }
+  
   // Tooltips
-  nodeEnter.on('mouseover', (event, d) => {
-    const tooltip = document.getElementById('tooltip');
-    tooltip.style.display = 'block';
-    tooltip.style.left = (event.pageX + 15) + 'px';
-    tooltip.style.top = (event.pageY - 10) + 'px';
-    tooltip.innerHTML = `
-      <div class="tip-name">${d.data.name}</div>
-      <div class="tip-detail">Score: ${d.data.final_score.toFixed(4)} | P(success): ${d.data.success_prob.toFixed(3)}</div>
-      <div class="tip-detail">Relevance: ${d.data.relevance.toFixed(4)} | Obs: ${d.data.observations}</div>
-      <div class="tip-detail">${d.data.description}</div>
-    `;
-  }).on('mousemove', (event) => {
-    const tooltip = document.getElementById('tooltip');
-    tooltip.style.left = (event.pageX + 15) + 'px';
-    tooltip.style.top = (event.pageY - 10) + 'px';
-  }).on('mouseout', () => {
-    document.getElementById('tooltip').style.display = 'none';
-  }).on('click', (event, d) => {
-    selectNode(d);
-  });
+  node.select('.node-circle')
+    .on('mouseover', (event, d) => {
+      const tooltip = document.getElementById('tooltip');
+      tooltip.style.display = 'block';
+      tooltip.style.left = (event.pageX + 15) + 'px';
+      tooltip.style.top = (event.pageY - 10) + 'px';
+      tooltip.innerHTML = `
+        <div class="tip-name">${d.data.name}</div>
+        <div class="tip-detail">Score: ${d.data.final_score.toFixed(4)} | P(success): ${d.data.success_prob.toFixed(3)}</div>
+        <div class="tip-detail">Relevance: ${d.data.relevance.toFixed(4)} | Obs: ${d.data.observations}</div>
+        <div class="tip-detail">${d.data.description}</div>
+      `;
+    }).on('mousemove', (event) => {
+      const tooltip = document.getElementById('tooltip');
+      tooltip.style.left = (event.pageX + 15) + 'px';
+      tooltip.style.top = (event.pageY - 10) + 'px';
+    }).on('mouseout', () => {
+      document.getElementById('tooltip').style.display = 'none';
+    }).on('click', (event, d) => {
+      selectNode(d);
+    });
   
   // Force simulation
   simulation = d3.forceSimulation(nodes)
@@ -754,22 +1190,21 @@ function updateGraph(ranking) {
     .force('center', d3.forceCenter(width / 2, height / 2))
     .force('collision', d3.forceCollide().radius(d => d.radius + 5))
     .on('tick', () => {
-      link.selectAll('line')
+      g.select('.edges').selectAll('.edge')
         .attr('x1', d => d.source.x)
         .attr('y1', d => d.source.y)
         .attr('x2', d => d.target.x)
         .attr('y2', d => d.target.y);
-      node.selectAll('circle')
-        .attr('cx', d => d.x)
-        .attr('cy', d => d.y);
-      label.selectAll('text')
+      g.select('.nodes').selectAll('.node')
+        .attr('transform', d => `translate(${d.x},${d.y})`);
+      g.select('.labels').selectAll('text')
         .attr('x', d => d.x)
-        .attr('y', d => d.y);
+        .attr('y', d => d.y + d.radius + 12);
     });
   
   // Re-select if previously selected
-  if (selectedNode) {
-    const found = nodes.find(n => n.id === selectedNode.id);
+  if (selectedNodeData) {
+    const found = nodes.find(n => n.id === selectedNodeData.id);
     if (found) {
       selectNode(found);
     }
@@ -785,7 +1220,7 @@ function updateRankedList(ranking) {
   
   ranking.forEach((r, i) => {
     const item = document.createElement('div');
-    item.className = 'rank-item' + (selectedNode && selectedNode.id === r.name ? ' selected' : '');
+    item.className = 'rank-item' + (selectedNodeData && selectedNodeData.id === r.name ? ' selected' : '');
     item.innerHTML = `
       <span class="rank-number">#${i + 1}</span>
       <span class="skill-name">${r.name}</span>
@@ -798,10 +1233,8 @@ function updateRankedList(ranking) {
       </div>
     `;
     item.onclick = () => {
-      // Find node data and select
       const nodeData = { id: r.name, data: r, radius: getNodeRadius(r.final_score) };
       selectNode(nodeData);
-      // Highlight in list
       document.querySelectorAll('.rank-item').forEach(el => el.classList.remove('selected'));
       item.classList.add('selected');
     };
@@ -809,8 +1242,60 @@ function updateRankedList(ranking) {
   });
 }
 
+// ============================================================
+// MINI LOG
+// ============================================================
+let actionLog = [];
+
+function addLogEntry(action, skill, success) {
+  const entry = {
+    action: action,
+    skill: skill,
+    success: success,
+    time: new Date().toLocaleTimeString()
+  };
+  actionLog.unshift(entry);
+  if (actionLog.length > 5) actionLog.pop();
+  renderLog();
+}
+
+function renderLog() {
+  const container = document.getElementById('logEntries');
+  if (actionLog.length === 0) {
+    container.innerHTML = '<div class="log-entry"><span class="log-empty">No actions recorded yet.</span></div>';
+    return;
+  }
+  
+  container.innerHTML = actionLog.map(e => `
+    <div class="log-entry">
+      <span class="log-time">${e.time}</span>
+      <div class="log-text">
+        <span class="log-action">${e.action}</span>
+        <span class="log-skill">${e.skill}</span>
+        ${e.success !== null ? `<span style="color:var(--${e.success ? 'success' : 'danger'})"> → ${e.success ? '✓' : '✗'}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// TASK BANNER
+// ============================================================
+function showTaskBanner(task) {
+  const banner = document.getElementById('taskBanner');
+  document.getElementById('taskBannerName').textContent = task;
+  banner.classList.add('active');
+}
+
+function hideTaskBanner() {
+  document.getElementById('taskBanner').classList.remove('active');
+}
+
+// ============================================================
+// NODE SELECTION & OUTCOME RECORDING
+// ============================================================
 function selectNode(d) {
-  selectedNode = d;
+  selectedNodeData = d;
   const panel = document.getElementById('detailPanel');
   panel.classList.add('visible');
   document.getElementById('detailName').textContent = d.data.name;
@@ -820,10 +1305,158 @@ function selectNode(d) {
   document.getElementById('statRel').textContent = d.data.relevance.toFixed(4);
   document.getElementById('statObs').textContent = d.data.observations;
   
+  // Reset outcome feedback
+  document.getElementById('outcomeFeedback').className = 'outcome-feedback';
+  document.getElementById('outcomeFeedback').textContent = '';
+  
   // Highlight in list
   document.querySelectorAll('.rank-item').forEach((el, i) => {
     el.classList.toggle('selected', currentRanking[i] && currentRanking[i].name === d.id);
   });
+}
+
+function recordOutcome(skillName, success) {
+  const record = {
+    skill: skillName,
+    success: success ? 1 : 0,
+    timestamp: new Date().toISOString()
+  };
+  allRecords.push(record);
+  
+  // Add to log
+  addLogEntry('recorded', skillName, success);
+  
+  // Re-rank and pulse
+  const ranking = rankSkills(currentTask, EMBEDDED_SKILLS, allRecords, 20);
+  updateGraph(ranking, skillName);
+  updateRankedList(ranking);
+  
+  // Show feedback AFTER graph update (so it isn't cleared by selectNode)
+  const feedback = document.getElementById('outcomeFeedback');
+  feedback.className = 'outcome-feedback show ' + (success ? 'success' : 'failure');
+  feedback.textContent = success 
+    ? `✓ Recorded success for "${skillName}"` 
+    : `✗ Recorded failure for "${skillName}"`;
+  
+  // Update status
+  document.getElementById('statusBar').textContent = 
+    `Recorded ${success ? 'success' : 'failure'} for "${skillName}" | ${allRecords.length} total records | ${new Date().toLocaleTimeString()}`;
+}
+
+// ============================================================
+// LIVE MODE
+// ============================================================
+let liveMode = false;
+let livePollingInterval = null;
+let lastPolledRecords = allRecords.length;
+const POLL_INTERVAL_MS = 3000;
+
+function toggleLiveMode() {
+  liveMode = !liveMode;
+  const btn = document.getElementById('liveToggle');
+  const indicator = document.getElementById('liveIndicator');
+  const logDot = document.getElementById('logLiveDot');
+  
+  btn.classList.toggle('active', liveMode);
+  indicator.classList.toggle('active', liveMode);
+  logDot.classList.toggle('active', liveMode);
+  
+  if (liveMode) {
+    startLivePolling();
+    addLogEntry('live mode', 'enabled', null);
+    updateStatus('Live Mode ON — polling for updates...');
+  } else {
+    stopLivePolling();
+    addLogEntry('live mode', 'disabled', null);
+    updateStatus('Live Mode OFF');
+  }
+}
+
+function startLivePolling() {
+  if (livePollingInterval) clearInterval(livePollingInterval);
+  
+  livePollingInterval = setInterval(async () => {
+    try {
+      // Attempt to poll ATSM API endpoint
+      const response = await fetch('http://localhost:8765/atsm/status', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(2000)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        handleLiveUpdate(data);
+      }
+    } catch (e) {
+      // Endpoint unavailable — silently continue (could also log)
+    }
+  }, POLL_INTERVAL_MS);
+}
+
+function stopLivePolling() {
+  if (livePollingInterval) {
+    clearInterval(livePollingInterval);
+    livePollingInterval = null;
+  }
+}
+
+function handleLiveUpdate(data) {
+  if (data.new_records && data.new_records.length > 0) {
+    const newRecords = data.new_records.filter(r => {
+      return !allRecords.some(existing => 
+        existing.skill === r.skill && 
+        existing.timestamp === r.timestamp &&
+        existing.success === r.success
+      );
+    });
+    
+    if (newRecords.length > 0) {
+      allRecords.push(...newRecords);
+      
+      // Log new actions
+      newRecords.forEach(r => {
+        addLogEntry('auto-detected', r.skill, r.success === 1);
+      });
+      
+      // Show current task if provided
+      if (data.current_task) {
+        showTaskBanner(data.current_task);
+      }
+      
+      // Re-rank and pulse affected skills
+      const affectedSkills = [...new Set(newRecords.map(r => r.skill))];
+      const ranking = rankSkills(currentTask, EMBEDDED_SKILLS, allRecords, 20);
+      updateGraph(ranking, affectedSkills[0]);
+      updateRankedList(ranking);
+      
+      updateStatus(`Live: ${newRecords.length} new outcome(s) detected | ${allRecords.length} total`);
+    }
+  }
+  
+  if (data.current_task) {
+    showTaskBanner(data.current_task);
+  }
+}
+
+// ============================================================
+// THEME TOGGLE
+// ============================================================
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  html.setAttribute('data-theme', next);
+  document.getElementById('themeLabel').textContent = next === 'light' ? 'Light' : 'Dark';
+  localStorage.setItem('atsm-theme', next);
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('atsm-theme');
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('themeLabel').textContent = 'Light';
+  }
 }
 
 // ============================================================
@@ -833,20 +1466,30 @@ function runRanking(task) {
   if (!task.trim()) return;
   
   currentTask = task;
+  showTaskBanner(task);
+  
   const overlay = document.getElementById('loadingOverlay');
   overlay.style.display = 'flex';
   
+  addLogEntry('ranking for', task, null);
+  
   setTimeout(() => {
-    const ranking = rankSkills(task, EMBEDDED_SKILLS, EMBEDDED_RECORDS, 20);
+    const ranking = rankSkills(task, EMBEDDED_SKILLS, allRecords, 20);
     
     updateGraph(ranking);
     updateRankedList(ranking);
     
-    document.getElementById('statusBar').textContent = 
-      `Ranked ${ranking.length} skills for: "${task}" | ${EMBEDDED_RECORDS.length} records | ${new Date().toLocaleTimeString()}`;
+    updateStatus(`Ranked ${ranking.length} skills for "${task}" | ${allRecords.length} records | ${new Date().toLocaleTimeString()}`);
     
     overlay.style.display = 'none';
+    
+    // Auto-hide banner after ranking completes
+    setTimeout(hideTaskBanner, 2000);
   }, 50);
+}
+
+function updateStatus(text) {
+  document.getElementById('statusBar').textContent = text;
 }
 
 // ============================================================
@@ -857,17 +1500,20 @@ let autoRefreshInterval = null;
 function startAutoRefresh() {
   if (autoRefreshInterval) clearInterval(autoRefreshInterval);
   autoRefreshInterval = setInterval(() => {
-    runRanking(currentTask);
-    const indicator = document.getElementById('refreshIndicator');
-    indicator.style.opacity = '1';
-    setTimeout(() => indicator.style.opacity = '1', 200);
-  }, 5000);
+    if (!liveMode) {
+      runRanking(currentTask);
+      const indicator = document.getElementById('refreshIndicator');
+      indicator.style.opacity = '1';
+      setTimeout(() => indicator.style.opacity = '1', 200);
+    }
+  }, 30000); // 30s auto-refresh when not in live mode
 }
 
 // ============================================================
 // INITIALIZATION
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+  loadTheme();
   initGraph();
   runRanking(currentTask);
   startAutoRefresh();
@@ -880,6 +1526,27 @@ document.addEventListener('DOMContentLoaded', () => {
   btn.addEventListener('click', trigger);
   input.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') trigger();
+  });
+  
+  // Theme toggle
+  document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+  
+  // Live mode toggle
+  document.getElementById('liveToggle').addEventListener('click', toggleLiveMode);
+  
+  // Task banner close
+  document.getElementById('taskBannerClose').addEventListener('click', hideTaskBanner);
+  
+  // Outcome recording
+  document.getElementById('recordSuccess').addEventListener('click', () => {
+    if (selectedNodeData) {
+      recordOutcome(selectedNodeData.id, true);
+    }
+  });
+  document.getElementById('recordFailure').addEventListener('click', () => {
+    if (selectedNodeData) {
+      recordOutcome(selectedNodeData.id, false);
+    }
   });
   
   // Window resize
