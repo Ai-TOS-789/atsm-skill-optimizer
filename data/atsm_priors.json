@@ -1,0 +1,56 @@
+{
+  "_meta": {
+    "updated_at": "2026-09-20T20:39:23.726364+00:00",
+    "decay_lambda": 0.01,
+    "prior_alpha": 1.0,
+    "prior_beta": 1.0,
+    "total_records": 41,
+    "skills_tracked": 7
+  },
+  "_global": {
+    "alpha": 1.0,
+    "beta": 1.0
+  },
+  "arxiv": {
+    "alpha": 7.839,
+    "beta": 1.0,
+    "expected_success": 0.8869,
+    "observations": 7
+  },
+  "box": {
+    "alpha": 3.7036,
+    "beta": 4.9299,
+    "expected_success": 0.429,
+    "observations": 7
+  },
+  "gif-search": {
+    "alpha": 1.0,
+    "beta": 5.8862,
+    "expected_success": 0.1452,
+    "observations": 5
+  },
+  "github": {
+    "alpha": 1.0,
+    "beta": 6.927,
+    "expected_success": 0.1262,
+    "observations": 6
+  },
+  "obsidian": {
+    "alpha": 3.9018,
+    "beta": 1.9995,
+    "expected_success": 0.6612,
+    "observations": 4
+  },
+  "pdf": {
+    "alpha": 3.983,
+    "beta": 3.9476,
+    "expected_success": 0.5022,
+    "observations": 6
+  },
+  "xurl": {
+    "alpha": 1.0,
+    "beta": 6.9272,
+    "expected_success": 0.1261,
+    "observations": 6
+  }
+}

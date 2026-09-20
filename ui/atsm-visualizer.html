@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATSM Desktop Visualizer</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  background: #0a0e17;
+  color: #e0e6f0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: linear-gradient(135deg, #1a1f2e 0%, #0d1321 100%);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid #2a3447;
+  z-index: 10;
+}
+.header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #7dd3fc;
+  margin: 0;
+  white-space: nowrap;
+}
+.header .subtitle {
+  font-size: 11px;
+  color: #64748b;
+}
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 700px;
+}
+.input-group input {
+  flex: 1;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input-group input:focus {
+  border-color: #3b82f6;
+}
+.input-group button {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #3b82f6;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.input-group button:hover { background: #2563eb; }
+.input-group button:active { background: #1d4ed8; }
+.main-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.graph-container {
+  flex: 1;
+  position: relative;
+  background: radial-gradient(ellipse at center, #0f172a 0%, #020617 100%);
+}
+.graph-container svg {
+  width: 100%;
+  height: 100%;
+}
+.side-panel {
+  width: 360px;
+  background: #0d1321;
+  border-left: 1px solid #2a3447;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-header {
+  padding: 16px;
+  border-bottom: 1px solid #2a3447;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94a3b8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.panel-header .refresh-indicator {
+  font-size: 11px;
+  color: #4ade80;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.ranked-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+.ranked-list::-webkit-scrollbar { width: 6px; }
+.ranked-list::-webkit-scrollbar-track { background: #0d1321; }
+.ranked-list::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+.rank-item {
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  background: #1a2035;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.rank-item:hover {
+  background: #1e293b;
+  border-color: #334155;
+  transform: translateX(2px);
+}
+.rank-item.selected {
+  border-color: #3b82f6;
+  background: #1e293b;
+}
+.rank-item .rank-number {
+  font-size: 11px;
+  font-weight: 700;
+  color: #3b82f6;
+  margin-right: 8px;
+}
+.rank-item .skill-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #e2e8f0;
+}
+.rank-item .skill-desc {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rank-item .skill-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 10px;
+}
+.rank-item .skill-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.badge-score { background: #1e3a5f; color: #7dd3fc; }
+.badge-success { background: #1a3a2e; color: #4ade80; }
+.badge-rel { background: #2d2a1a; color: #fbbf24; }
+.badge-obs { background: #2a1a2e; color: #c084fc; }
+
+/* Node tooltip */
+.node-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #e2e8f0;
+  max-width: 250px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 100;
+  display: none;
+}
+.node-tooltip .tip-name { font-weight: 600; color: #7dd3fc; margin-bottom: 4px; }
+.node-tooltip .tip-detail { color: #94a3b8; font-size: 11px; }
+
+/* Detail panel */
+.detail-panel {
+  padding: 16px;
+  border-top: 1px solid #2a3447;
+  background: #0a0f1a;
+  max-height: 250px;
+  overflow-y: auto;
+  display: none;
+}
+.detail-panel.visible { display: block; }
+.detail-panel h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #7dd3fc;
+  margin-bottom: 8px;
+}
+.detail-panel p {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.detail-panel .stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.stat-box {
+  background: #1a2035;
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+.stat-box .stat-label {
+  font-size: 9px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-box .stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-top: 2px;
+}
+
+/* Legend */
+.legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(13, 19, 33, 0.9);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 11px;
+}
+.legend-title { color: #94a3b8; margin-bottom: 6px; font-weight: 600; }
+.legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.legend-swatch { width: 16px; height: 12px; border-radius: 2px; }
+
+/* Status bar */
+.status-bar {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: rgba(13, 19, 33, 0.9);
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* SVG Graph Elements */
+.node-circle {
+  cursor: pointer;
+  stroke: #1e293b;
+  stroke-width: 2px;
+  transition: stroke 0.2s;
+}
+.node-circle:hover {
+  stroke: #3b82f6;
+  stroke-width: 3px;
+}
+.node-label {
+  font-size: 10px;
+  fill: #94a3b8;
+  pointer-events: none;
+  text-anchor: middle;
+  font-weight: 500;
+}
+.edge {
+  stroke-opacity: 0.4;
+  fill: none;
+  transition: stroke-opacity 0.3s, stroke-width 0.3s;
+}
+.edge:hover { stroke-opacity: 0.8; }
+
+/* Loading state */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #7dd3fc;
+  z-index: 50;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>ATSM</h1>
+  <span class="subtitle">Adaptive Task-Skill Matching</span>
+  <div class="input-group">
+    <input type="text" id="taskInput" placeholder="Describe your task... e.g., 'search and summarize papers'" />
+    <button id="rankBtn">Rank Skills</button>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="graph-container" id="graphContainer">
+    <svg id="graphSvg"></svg>
+    <div class="node-tooltip" id="tooltip"></div>
+    <div class="legend">
+      <div class="legend-title">P(success)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#ef4444"></div> 0.0 — Low</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#f59e0b"></div> 0.5 — Mid</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#22c55e"></div> 1.0 — High</div>
+      <div class="legend-title" style="margin-top:8px">Node size = Final Score</div>
+      <div class="legend-title" style="margin-top:4px">Edge = Co-occurrence</div>
+    </div>
+    <div class="status-bar" id="statusBar">Ready</div>
+    <div class="loading-overlay" id="loadingOverlay" style="display:none">Ranking...</div>
+  </div>
+
+  <div class="side-panel">
+    <div class="panel-header">
+      <span>Ranked Skills</span>
+      <span class="refresh-indicator" id="refreshIndicator">● Auto</span>
+    </div>
+    <div class="ranked-list" id="rankedList"></div>
+    <div class="detail-panel" id="detailPanel">
+      <h3 id="detailName"></h3>
+      <p id="detailDesc"></p>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-label">Final Score</div><div class="stat-value" id="statScore"></div></div>
+        <div class="stat-box"><div class="stat-label">P(success)</div><div class="stat-value" id="statSuccess"></div></div>
+        <div class="stat-box"><div class="stat-label">Relevance</div><div class="stat-value" id="statRel"></div></div>
+        <div class="stat-box"><div class="stat-label">Observations</div><div class="stat-value" id="statObs"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// EMBEDDED DATA (from atsm_db.jsonl and skill SKILL.md files)
+// ============================================================
+const EMBEDDED_SKILLS = [
+  {"name": "agent-self-learning", "description": "Capture experience, extract patterns, and improve skills.", "category": "root"},
+  {"name": "pattern-library", "description": "Curate, deduplicate, and serve patterns across skills.", "category": "root"},
+  {"name": "feedback-loop", "description": "Capture user corrections and apply lessons.", "category": "root"},
+  {"name": "self-modification", "description": "Modify agent source, tools, and prompt for self-improvement.", "category": "root"},
+  {"name": "cross-skill-learning", "description": "Share patterns and insights between related skills.", "category": "root"},
+  {"name": "ascii-video", "description": "ASCII video: convert video/audio to colored ASCII MP4/GIF.", "category": "creative"},
+  {"name": "manim-video", "description": "Manim CE animations: 3Blue1Brown math/algo videos.", "category": "creative"},
+  {"name": "design-md", "description": "Author/validate/export Google's DESIGN.md token spec files.", "category": "creative"},
+  {"name": "architecture-diagram", "description": "Dark-themed SVG architecture/cloud/infra diagrams as HTML.", "category": "creative"},
+  {"name": "songwriting-and-ai-music", "description": "Songwriting craft and Suno AI music prompts.", "category": "creative"},
+  {"name": "claude-design", "description": "Design one-off HTML artifacts (landing, deck, prototype).", "category": "creative"},
+  {"name": "humanizer", "description": "Humanize text: strip AI-isms and add real voice.", "category": "creative"},
+  {"name": "baoyu-infographic", "description": "Infographics: 21 layouts x 21 styles (信息图, 可视化).", "category": "creative"},
+  {"name": "p5js", "description": "p5.js sketches: gen art, shaders, interactive, 3D.", "category": "creative"},
+  {"name": "popular-web-designs", "description": "54 real design systems (Stripe, Linear, Vercel) as HTML/CSS.", "category": "creative"},
+  {"name": "sdlc-review", "description": "Review Kanban handoffs and route verified outcomes.", "category": "devops"},
+  {"name": "apple-reminders", "description": "Apple Reminders via remindctl: add, list, complete.", "category": "apple"},
+  {"name": "imessage", "description": "Send and receive iMessages/SMS via the imsg CLI on macOS.", "category": "apple"},
+  {"name": "findmy", "description": "Track Apple devices/AirTags via FindMy.app on macOS.", "category": "apple"},
+  {"name": "apple-notes", "description": "Manage Apple Notes via memo CLI: create, search, edit.", "category": "apple"},
+  {"name": "blocked-page-recovery", "description": "Use when a fetch fails: 403/429, paywall, WAF, bot wall.", "category": "web"},
+  {"name": "github", "description": "GitHub via gh CLI: PRs, issues, reviews, repos, auth.", "category": "software-development"},
+  {"name": "inspecting-hermes-desktop-dom", "description": "Read the live Hermes desktop DOM/CSS over CDP.", "category": "software-development"},
+  {"name": "nvme-local-storage", "description": "Optimize standard NVMe SSDs on Linux.", "category": "software-development"},
+  {"name": "dogfood", "description": "Exploratory QA of web apps: find bugs, evidence, reports.", "category": "software-development"},
+  {"name": "systematic-debugging", "description": "4-phase root cause debugging: understand bugs before fixing.", "category": "software-development"},
+  {"name": "spike", "description": "Throwaway experiments to validate an idea before build.", "category": "software-development"},
+  {"name": "hermes-agent-skill-authoring", "description": "Author in-repo SKILL.md files: frontmatter and structure.", "category": "software-development"},
+  {"name": "agents-md-init", "description": "Generate AGENTS.md project-instructions files via /init.", "category": "software-development"},
+  {"name": "structured-decision-model", "description": "Use specialized models for routing/classification.", "category": "software-development"},
+  {"name": "codebase-inspection", "description": "Inspect codebases w/ pygount: LOC, languages, ratios.", "category": "software-development"},
+  {"name": "python-debugpy", "description": "Debug Python: pdb REPL + debugpy remote (DAP).", "category": "software-development"},
+  {"name": "node-inspect-debugger", "description": "Debug Node.js via --inspect + Chrome DevTools Protocol CLI.", "category": "software-development"},
+  {"name": "test-driven-development", "description": "TDD: enforce RED-GREEN-REFACTOR, tests before code.", "category": "software-development"},
+  {"name": "requesting-code-review", "description": "Pre-commit review: security scan, quality gates, auto-fix.", "category": "software-development"},
+  {"name": "simplify-code", "description": "Parallel 4-agent cleanup of recent code changes.", "category": "software-development"},
+  {"name": "xurl", "description": "X/Twitter via xurl CLI: raw post search, posting, DM, media.", "category": "social-media"},
+  {"name": "obsidian", "description": "Read, search, create, and edit notes in the Obsidian vault.", "category": "note-taking"},
+  {"name": "gguf", "description": "Work with GGUF models locally.", "category": "research"},
+  {"name": "llm-wiki", "description": "Karpathy's LLM Wiki: build/query interlinked markdown KB.", "category": "research"},
+  {"name": "competitor-news-monitor", "description": "Watch named companies for material news; cited digests.", "category": "research"},
+  {"name": "grounded-citations", "description": "Ground answers and documents in cited, verifiable sources.", "category": "research"},
+  {"name": "arxiv", "description": "Search arXiv papers by keyword, author, category, or ID.", "category": "research"},
+  {"name": "huggingface-inference", "description": "Stream chat via Hugging Face Inference Providers API.", "category": "research"},
+  {"name": "email-inbox-triage", "description": "Triage an inbox: prioritize threads, draft replies safely.", "category": "email"},
+  {"name": "himalaya", "description": "Himalaya CLI: IMAP/SMTP email from terminal.", "category": "email"},
+  {"name": "box", "description": "Box manages cloud files, sharing, search, and metadata.", "category": "productivity"},
+  {"name": "atsm-self-update", "description": "Update ATSM skill from git and verify integrity.", "category": "productivity"},
+  {"name": "product-price-monitor", "description": "Watch product, flight, or listing prices; alert on target.", "category": "productivity"},
+  {"name": "teams-meeting-pipeline", "description": "Teams meeting summaries, job replay, Graph subscriptions.", "category": "productivity"},
+  {"name": "notion", "description": "Notion API + ntn CLI: pages, databases, markdown, Workers.", "category": "productivity"},
+  {"name": "powerpoint", "description": "Create, read, edit .pptx decks with python-pptx.", "category": "productivity"},
+  {"name": "google-workspace", "description": "Google OAuth2 client credentials.", "category": "productivity"},
+  {"name": "maps", "description": "Geocode, POIs, routes, timezones via OpenStreetMap/OSRM.", "category": "productivity"},
+  {"name": "weekly-review-planning", "description": "Weekly reset: commitments, stalled work, next-week plan.", "category": "productivity"},
+  {"name": "airtable", "description": "Airtable REST API via curl. Records CRUD, filters, upserts.", "category": "productivity"},
+  {"name": "xlsx", "description": "Create, read, edit Excel .xlsx workbooks and CSVs.", "category": "productivity"},
+  {"name": "meeting-action-items", "description": "Turn meeting notes into cited decisions, owners, tickets.", "category": "productivity"},
+  {"name": "atsm-skill-optimizer", "description": "ATSM: rank skills by relevance and success history.", "category": "productivity"},
+  {"name": "docx", "description": "Create, read, edit, template, and review Word .docx files.", "category": "productivity"},
+  {"name": "pdf", "description": "PDF files: create, read, merge, fill, OCR, edit text.", "category": "productivity"},
+  {"name": "document-to-action-items", "description": "Extract cited obligations, deadlines, tasks from documents.", "category": "productivity"},
+  {"name": "gif-search", "description": "Search/download GIFs from Tenor via curl + jq.", "category": "media"},
+  {"name": "songsee", "description": "Audio spectrograms/features (mel, chroma, MFCC) via CLI.", "category": "media"},
+  {"name": "youtube-content", "description": "YouTube transcripts to summaries, threads, blogs.", "category": "media"},
+  {"name": "opencode", "description": "Delegate coding to OpenCode CLI (features, PR review).", "category": "autonomous-ai-agents"},
+  {"name": "hermes-agent", "description": "Use, configure, theme, extend, and orchestrate Hermes Agent.", "category": "autonomous-ai-agents"},
+  {"name": "claude-code", "description": "Delegate coding to Claude Code CLI (features, PRs).", "category": "autonomous-ai-agents"},
+  {"name": "codex", "description": "Delegate coding to OpenAI Codex CLI (features, PRs).", "category": "autonomous-ai-agents"},
+  {"name": "computer-use", "description": "Drive the desktop background-first; escalate on signal.", "category": "autonomous-ai-agents"}
+];
+
+const EMBEDDED_RECORDS = [
+  {"skill": "arxiv", "success": 1, "timestamp": "2026-09-20T20:18:38.206096+00:00"},
+  {"skill": "arxiv", "success": 1, "timestamp": "2026-09-20T20:18:38.225811+00:00"},
+  {"skill": "box", "success": 0, "timestamp": "2026-09-20T20:18:38.247874+00:00"},
+  {"skill": "obsidian", "success": 1, "timestamp": "2026-09-20T20:18:38.268983+00:00"},
+  {"skill": "gif-search", "success": 0, "timestamp": "2026-09-20T20:18:38.286015+00:00"}
+];
+
+// ============================================================
+// ATSM ALGORITHM (JavaScript port of atsm.py)
+// ============================================================
+const ALPHA = 0.6;
+const BETA = 0.4;
+const PRIOR_SUCCESS = 1.0;
+const PRIOR_FAILURE = 1.0;
+const DECAY_LAMBDA = 0.01;
+const MIN_OBSERVATIONS = 3;
+
+function tokenize(text) {
+  return (text.toLowerCase().match(/[a-zA-Z0-9_\u0E00-\u0E7F]+/g) || []);
+}
+
+function computeTFIDF(docs) {
+  const n = docs.length;
+  const df = {};
+  docs.forEach(doc => {
+    const seen = new Set(doc);
+    seen.forEach(term => { df[term] = (df[term] || 0) + 1; });
+  });
+  const idf = {};
+  for (const [term, freq] of Object.entries(df)) {
+    idf[term] = Math.log((n + 1) / (1 + freq)) + 1;
+  }
+  return docs.map(doc => {
+    const tf = {};
+    doc.forEach(t => { tf[t] = (tf[t] || 0) + 1; });
+    const total = doc.length || 1;
+    const vec = {};
+    for (const [term, count] of Object.entries(tf)) {
+      vec[term] = (count / total) * (idf[term] || 0);
+    }
+    return vec;
+  });
+}
+
+function cosineSim(a, b) {
+  const common = Object.keys(a).filter(k => k in b);
+  if (common.length === 0) return 0;
+  const dot = common.reduce((s, t) => s + a[t] * b[t], 0);
+  const normA = Math.sqrt(Object.values(a).reduce((s, v) => s + v * v, 0));
+  const normB = Math.sqrt(Object.values(b).reduce((s, v) => s + v * v, 0));
+  if (normA === 0 || normB === 0) return 0;
+  return dot / (normA * normB);
+}
+
+function keywordOverlap(a, b) {
+  const sa = new Set(a);
+  const sb = new Set(b);
+  if (sa.size === 0 || sb.size === 0) return 0;
+  const intersection = new Set([...sa].filter(x => sb.has(x)));
+  const union = new Set([...sa, ...sb]);
+  return intersection.size / union.size;
+}
+
+function computeStats(records) {
+  const now = Date.now();
+  const stats = {};
+  records.forEach(rec => {
+    const skill = rec.skill;
+    const success = rec.success;
+    const ts = new Date(rec.timestamp).getTime();
+    const ageDays = Math.max((now - ts) / 86400000, 0);
+    const weight = Math.exp(-DECAY_LAMBDA * ageDays);
+    
+    if (!stats[skill]) {
+      stats[skill] = { successes: 0, failures: 0, total: 0, raw_successes: 0, raw_failures: 0, effective_total: 0 };
+    }
+    const s = stats[skill];
+    s.total++;
+    s.effective_total += weight;
+    if (success) { s.successes += weight; s.raw_successes++; }
+    else { s.failures += weight; s.raw_failures++; }
+  });
+
+  for (const skill in stats) {
+    const s = stats[skill];
+    const alphaPost = PRIOR_SUCCESS + s.successes;
+    const betaPost = PRIOR_FAILURE + s.failures;
+    s.expected_success = alphaPost / (alphaPost + betaPost);
+    s.confidence = Math.min(s.effective_total / MIN_OBSERVATIONS, 1.0);
+  }
+  return stats;
+}
+
+function rankSkills(task, skills, records, topK = 20) {
+  const stats = computeStats(records);
+  const taskTokens = tokenize(task);
+  const allTokens = [...skills.map(s => tokenize(s.name + " " + s.description)), taskTokens];
+  const vectors = computeTFIDF(allTokens);
+  const taskVec = vectors[vectors.length - 1];
+  
+  const results = skills.map((skill, i) => {
+    const relevance = ALPHA * cosineSim(vectors[i], taskVec) + BETA * keywordOverlap(tokenize(skill.name + " " + skill.description), taskTokens);
+    const s = stats[skill.name];
+    let successProb;
+    if (s && s.total > 0) {
+      const priorMean = PRIOR_SUCCESS / (PRIOR_SUCCESS + PRIOR_FAILURE);
+      successProb = s.confidence * s.expected_success + (1 - s.confidence) * priorMean;
+    } else {
+      successProb = PRIOR_SUCCESS / (PRIOR_SUCCESS + PRIOR_FAILURE);
+    }
+    const finalScore = relevance * successProb;
+    return {
+      name: skill.name,
+      description: skill.description,
+      category: skill.category,
+      relevance: relevance,
+      success_prob: successProb,
+      final_score: finalScore,
+      observations: s ? s.total : 0,
+      confidence: s ? s.confidence : 0,
+      expected_success: s ? s.expected_success : 0.5
+    };
+  });
+  
+  results.sort((a, b) => b.final_score - a.final_score);
+  return results.slice(0, topK);
+}
+
+// ============================================================
+// CO-OCCURRENCE COMPUTATION
+// ============================================================
+function computeCooccurrence(records) {
+  // Group records by time proximity (within 5 seconds) to find co-occurrence
+  const sorted = [...records].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  const cooc = {};
+  
+  for (let i = 0; i < sorted.length; i++) {
+    for (let j = i + 1; j < sorted.length; j++) {
+      const timeDiff = (new Date(sorted[j].timestamp) - new Date(sorted[i].timestamp)) / 1000;
+      if (timeDiff > 5) break;
+      const key = [sorted[i].skill, sorted[j].skill].sort().join("|||");
+      cooc[key] = (cooc[key] || 0) + 1;
+    }
+  }
+  return cooc;
+}
+
+// ============================================================
+// D3 GRAPH RENDERING
+// ============================================================
+let simulation;
+let svg;
+let link, node, label;
+let currentRanking = [];
+let currentTask = "search and summarize papers";
+let selectedNode = null;
+
+function getColor(score) {
+  // Red (0) -> Yellow (0.5) -> Green (1.0)
+  if (score < 0.5) {
+    const t = score / 0.5;
+    const r = 239;
+    const g = Math.round(68 + t * (245 - 68));
+    const b = Math.round(68 + t * (15 - 68));
+    return `rgb(${r},${g},${b})`;
+  } else {
+    const t = (score - 0.5) / 0.5;
+    const r = Math.round(245 + t * (34 - 245));
+    const g = Math.round(159 + t * (197 - 159));
+    const b = Math.round(15 + t * (94 - 15));
+    return `rgb(${r},${g},${b})`;
+  }
+}
+
+function getNodeRadius(score) {
+  // Map score to radius 8-35
+  const minR = 8, maxR = 35;
+  return minR + (maxR - minR) * Math.min(score * 5, 1);
+}
+
+function initGraph() {
+  const container = document.getElementById('graphContainer');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  
+  svg = d3.select('#graphSvg')
+    .attr('width', width)
+    .attr('height', height);
+  
+  // Clear previous
+  svg.selectAll('*').remove();
+  
+  // Add zoom/pan
+  const g = svg.append('g');
+  
+  svg.call(d3.zoom()
+    .scaleExtent([0.2, 4])
+    .on('zoom', (event) => { g.attr('transform', event.transform); }));
+  
+  // Arrow markers
+  svg.append('defs').append('marker')
+    .attr('id', 'arrowhead')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 20)
+    .attr('refY', 0)
+    .attr('markerWidth', 6)
+    .attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M0,-5L10,0L0,5')
+    .attr('fill', '#4a5568');
+  
+  link = g.append('g').attr('class', 'edges').selectAll('.edge');
+  node = g.append('g').attr('class', 'nodes').selectAll('.node');
+  label = g.append('g').attr('class', 'labels').selectAll('.node-label');
+}
+
+function updateGraph(ranking) {
+  if (!ranking || ranking.length === 0) return;
+  
+  const container = document.getElementById('graphContainer');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  
+  currentRanking = ranking;
+  const cooc = computeCooccurrence(EMBEDDED_RECORDS);
+  
+  // Create nodes
+  const nodes = ranking.map(d => ({
+    id: d.name,
+    data: d,
+    radius: getNodeRadius(d.final_score),
+    x: width / 2 + (Math.random() - 0.5) * 200,
+    y: height / 2 + (Math.random() - 0.5) * 200
+  }));
+  
+  // Create edges from co-occurrence and category similarity
+  const links = [];
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const key = [nodes[i].id, nodes[j].id].sort().join("|||");
+      const weight = cooc[key] || 0;
+      
+      // Also connect skills in same category
+      if (nodes[i].data.category === nodes[j].data.category) {
+        const catWeight = 0.5;
+        if (catWeight > 0) {
+          links.push({ source: nodes[i], target: nodes[j], weight: catWeight });
+        }
+      }
+      
+      if (weight > 0) {
+        links.push({ source: nodes[i], target: nodes[j], weight: weight });
+      }
+    }
+  }
+  
+  // Remove old elements
+  if (simulation) simulation.stop();
+  link.selectAll('line').remove();
+  node.selectAll('circle').remove();
+  label.selectAll('text').remove();
+  
+  // Draw edges
+  link = link.data(links);
+  link.enter().append('line')
+    .attr('class', 'edge')
+    .style('stroke', '#4a5568')
+    .style('stroke-width', d => Math.max(1, d.weight * 2));
+  
+  // Draw nodes
+  node = node.data(nodes);
+  const nodeEnter = node.enter().append('g')
+    .attr('class', 'node')
+    .style('cursor', 'pointer');
+  
+  nodeEnter.append('circle')
+    .attr('class', 'node-circle')
+    .attr('r', d => d.radius)
+    .style('fill', d => getColor(d.data.success_prob))
+    .style('stroke', '#1e293b')
+    .style('stroke-width', 2);
+  
+  nodeEnter.append('text')
+    .attr('class', 'node-label')
+    .text(d => d.data.name.length > 15 ? d.data.name.substring(0, 13) + '...' : d.data.name)
+    .attr('dy', d => d.radius + 12)
+    .attr('fill', '#94a3b8')
+    .attr('font-size', '10px')
+    .attr('text-anchor', 'middle')
+    .style('pointer-events', 'none');
+  
+  // Tooltips
+  nodeEnter.on('mouseover', (event, d) => {
+    const tooltip = document.getElementById('tooltip');
+    tooltip.style.display = 'block';
+    tooltip.style.left = (event.pageX + 15) + 'px';
+    tooltip.style.top = (event.pageY - 10) + 'px';
+    tooltip.innerHTML = `
+      <div class="tip-name">${d.data.name}</div>
+      <div class="tip-detail">Score: ${d.data.final_score.toFixed(4)} | P(success): ${d.data.success_prob.toFixed(3)}</div>
+      <div class="tip-detail">Relevance: ${d.data.relevance.toFixed(4)} | Obs: ${d.data.observations}</div>
+      <div class="tip-detail">${d.data.description}</div>
+    `;
+  }).on('mousemove', (event) => {
+    const tooltip = document.getElementById('tooltip');
+    tooltip.style.left = (event.pageX + 15) + 'px';
+    tooltip.style.top = (event.pageY - 10) + 'px';
+  }).on('mouseout', () => {
+    document.getElementById('tooltip').style.display = 'none';
+  }).on('click', (event, d) => {
+    selectNode(d);
+  });
+  
+  // Force simulation
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(100).strength(0.1))
+    .force('charge', d3.forceManyBody().strength(-200))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => d.radius + 5))
+    .on('tick', () => {
+      link.selectAll('line')
+        .attr('x1', d => d.source.x)
+        .attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x)
+        .attr('y2', d => d.target.y);
+      node.selectAll('circle')
+        .attr('cx', d => d.x)
+        .attr('cy', d => d.y);
+      label.selectAll('text')
+        .attr('x', d => d.x)
+        .attr('y', d => d.y);
+    });
+  
+  // Re-select if previously selected
+  if (selectedNode) {
+    const found = nodes.find(n => n.id === selectedNode.id);
+    if (found) {
+      selectNode(found);
+    }
+  }
+}
+
+// ============================================================
+// RANKED LIST
+// ============================================================
+function updateRankedList(ranking) {
+  const list = document.getElementById('rankedList');
+  list.innerHTML = '';
+  
+  ranking.forEach((r, i) => {
+    const item = document.createElement('div');
+    item.className = 'rank-item' + (selectedNode && selectedNode.id === r.name ? ' selected' : '');
+    item.innerHTML = `
+      <span class="rank-number">#${i + 1}</span>
+      <span class="skill-name">${r.name}</span>
+      <div class="skill-desc">${r.description || 'No description'}</div>
+      <div class="skill-meta">
+        <span class="badge badge-score">${r.final_score.toFixed(3)}</span>
+        <span class="badge badge-success">P=${r.success_prob.toFixed(2)}</span>
+        <span class="badge badge-rel">R=${r.relevance.toFixed(2)}</span>
+        <span class="badge badge-obs">N=${r.observations}</span>
+      </div>
+    `;
+    item.onclick = () => {
+      // Find node data and select
+      const nodeData = { id: r.name, data: r, radius: getNodeRadius(r.final_score) };
+      selectNode(nodeData);
+      // Highlight in list
+      document.querySelectorAll('.rank-item').forEach(el => el.classList.remove('selected'));
+      item.classList.add('selected');
+    };
+    list.appendChild(item);
+  });
+}
+
+function selectNode(d) {
+  selectedNode = d;
+  const panel = document.getElementById('detailPanel');
+  panel.classList.add('visible');
+  document.getElementById('detailName').textContent = d.data.name;
+  document.getElementById('detailDesc').textContent = d.data.description || 'No description available.';
+  document.getElementById('statScore').textContent = d.data.final_score.toFixed(4);
+  document.getElementById('statSuccess').textContent = d.data.success_prob.toFixed(3);
+  document.getElementById('statRel').textContent = d.data.relevance.toFixed(4);
+  document.getElementById('statObs').textContent = d.data.observations;
+  
+  // Highlight in list
+  document.querySelectorAll('.rank-item').forEach((el, i) => {
+    el.classList.toggle('selected', currentRanking[i] && currentRanking[i].name === d.id);
+  });
+}
+
+// ============================================================
+// MAIN RANKING TRIGGER
+// ============================================================
+function runRanking(task) {
+  if (!task.trim()) return;
+  
+  currentTask = task;
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.style.display = 'flex';
+  
+  setTimeout(() => {
+    const ranking = rankSkills(task, EMBEDDED_SKILLS, EMBEDDED_RECORDS, 20);
+    
+    updateGraph(ranking);
+    updateRankedList(ranking);
+    
+    document.getElementById('statusBar').textContent = 
+      `Ranked ${ranking.length} skills for: "${task}" | ${EMBEDDED_RECORDS.length} records | ${new Date().toLocaleTimeString()}`;
+    
+    overlay.style.display = 'none';
+  }, 50);
+}
+
+// ============================================================
+// AUTO-REFRESH
+// ============================================================
+let autoRefreshInterval = null;
+
+function startAutoRefresh() {
+  if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+  autoRefreshInterval = setInterval(() => {
+    runRanking(currentTask);
+    const indicator = document.getElementById('refreshIndicator');
+    indicator.style.opacity = '1';
+    setTimeout(() => indicator.style.opacity = '1', 200);
+  }, 5000);
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  initGraph();
+  runRanking(currentTask);
+  startAutoRefresh();
+  
+  // Input handling
+  const input = document.getElementById('taskInput');
+  const btn = document.getElementById('rankBtn');
+  
+  const trigger = () => runRanking(input.value);
+  btn.addEventListener('click', trigger);
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') trigger();
+  });
+  
+  // Window resize
+  window.addEventListener('resize', () => {
+    initGraph();
+    runRanking(currentTask);
+  });
+});
+</script>
+</body>
+</html>

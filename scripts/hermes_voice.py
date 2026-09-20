@@ -4,11 +4,16 @@
 Listens for voice commands, transcribes with faster-whisper,
 executes via Hermes CLI, and responds with text-to-speech.
 
+Integrates with hermes_wake.py for wake word detection when available.
+
 Usage:
     python3 hermes_voice.py              # start listening
     python3 hermes_voice.py --once       # single command
     python3 hermes_voice.py --text       # text input mode
+    python3 hermes_voice.py --wake       # use wake word detection (requires hermes_wake.py)
 """
+
+
 
 import argparse
 import json
@@ -160,7 +165,9 @@ def main():
     parser = argparse.ArgumentParser(description="Hermes Voice Assistant")
     parser.add_argument("--once", action="store_true", help="Single command mode")
     parser.add_argument("--text", action="store_true", help="Text input mode")
+    parser.add_argument("--wake", action="store_true", help="Use wake word detection (via hermes_wake.py)")
     parser.add_argument("--command", "-c", help="Direct command to execute")
+    parser.add_argument("--wake-words", nargs="+", default=None, help="Custom wake words")
     args = parser.parse_args()
     
     print("=" * 50)
@@ -172,6 +179,25 @@ def main():
         print(f"\n{response}\n")
         speak(response)
         return
+    
+    # Wake word detection mode (via hermes_wake.py)
+    if args.wake:
+        wake_script = Path(__file__).parent / "hermes_wake.py"
+        if not wake_script.exists():
+            print("❌ hermes_wake.py not found. Falling back to continuous mode.")
+        else:
+            print("🔊 Using wake word detection\n")
+            cmd = [sys.executable, str(wake_script)]
+            if args.wake_words:
+                for w in args.wake_words:
+                    cmd.extend(["--wake-word", w])
+            if args.once:
+                cmd.append("--once")
+            try:
+                subprocess.run(cmd)
+            except KeyboardInterrupt:
+                pass
+            return
     
     if args.text:
         print("\nText mode (type 'quit' to exit):")
