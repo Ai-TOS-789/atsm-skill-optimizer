@@ -8,6 +8,7 @@ Runs as a daemon, performing these checks every 30 minutes:
   • Git repo: unpushed commits, new skills
   • Writes detected issues to /tmp/proactive_tasks.json
   • Reads completions from /tmp/proactive_completed.json
+  • Integrates agent_memory, embed_rank, and agent_alerts
 
 CLI:
   python3 proactive_agent.py start    # start daemon
@@ -45,6 +46,118 @@ def log(msg: str):
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(line + "\n")
+
+
+# --- Optional Integration: agent_memory ---
+_memory_mod = None
+def _get_memory():
+    """Lazy-import and return the agent_memory module."""
+    global _memory_mod
+    if _memory_mod is None:
+        try:
+            sys.path.insert(0, str(Path(__file__).parent))
+            import agent_memory as _memory_mod
+        except ImportError:
+            _memory_mod = False
+    return _memory_mod if _memory_mod else None
+
+
+# --- Optional Integration: embed_rank ---
+_embed_rank_mod = None
+def _get_embed_rank():
+    """Lazy-import and return the embed_rank module."""
+    global _embed_rank_mod
+    if _embed_rank_mod is None:
+        try:
+            sys.path.insert(0, str(Path(__file__).parent))
+            import embed_rank as _embed_rank_mod
+        except ImportError:
+            _embed_rank_mod = False
+    return _embed_rank_mod if _embed_rank_mod else None
+
+
+# --- Optional Integration: agent_alerts ---
+_alerts_mod = None
+def _get_alerts():
+    """Lazy-import and return the agent_alerts module."""
+    global _alerts_mod
+    if _alerts_mod is None:
+        try:
+            sys.path.insert(0, str(Path(__file__).parent))
+            import agent_alerts as _alerts_mod
+        except ImportError:
+            _alerts_mod = False
+    return _alerts_mod if _alerts_mod else None
+
+
+# --- Memory helpers ---
+def load_memory():
+    """Load agent memory. Returns dict or None if agent_memory unavailable."""
+    mem = _get_memory()
+    if mem:
+        try:
+            return mem.load_memory()
+        except Exception as e:
+            log(f"MEMORY: load failed — {e}")
+    return None
+
+
+def save_memory(data: dict):
+    """Persist agent memory. No-op if agent_memory unavailable."""
+    mem = _get_memory()
+    if mem:
+        try:
+            mem.save_memory(data)
+        except Exception as e:
+            log(f"MEMORY: save failed — {e}")
+
+
+def record_issue_to_memory(issue: dict, memory_data: dict) -> str:
+    """Record an issue in agent memory. Returns issue ID or None."""
+    mem = _get_memory()
+    if mem:
+        try:
+            return mem.record_issue(issue, memory_data)
+        except Exception as e:
+            log(f"MEMORY: record_issue failed — {e}")
+    return None
+
+
+def log_cycle_to_memory(memory_data: dict):
+    """Increment cycle count in agent memory."""
+    mem = _get_memory()
+    if mem:
+        try:
+            return mem.log_cycle(data=memory_data)
+        except Exception as e:
+            log(f"MEMORY: log_cycle failed — {e}")
+    return None
+
+
+def get_skill_suggestions(issue: str) -> list:
+    """Get skill suggestions for an issue using embed_rank. Returns list of dicts."""
+    er = _get_embed_rank()
+    if er:
+        try:
+            results = er.rank_skills(issue, top_k=3)
+            # rank_skills returns (results, elapsed, backend_name)
+            if isinstance(results, tuple):
+                return results[0]
+            return results
+        except Exception as e:
+            log(f"EMBED_RANK: suggestion failed — {e}")
+    return []
+
+
+def dispatch_alerts(issues: list) -> list:
+    """Send alerts for detected issues. Returns list of alert records."""
+    alerts = _get_alerts()
+    if alerts:
+        try:
+            return alerts.process_alerts(issues)
+        except Exception as e:
+            log(f"ALERTS: dispatch failed — {e}")
+    return []
 
 
 # --- Task I/O ---
@@ -307,11 +420,20 @@ def check_completed_tasks():
 
 # --- Main check cycle ---
 def run_checks():
-    """Run all proactive checks."""
+    """Run all proactive checks with memory, embed_rank, and alerts integration."""
     log("=" * 50)
     log("PROACTIVE CHECK CYCLE START")
     log("=" * 50)
 
+    # --- Load agent memory at cycle start ---
+    memory_data = load_memory()
+    if memory_data is None:
+        memory_data = {}
+    cycle_num = log_cycle_to_memory(memory_data)
+    if cycle_num:
+        log(f"MEMORY: cycle #{cycle_num}")
+
+    # --- Run all checks ---
     all_issues = []
 
     # 1. Cron status
@@ -334,9 +456,55 @@ def run_checks():
     log("--- Processing completions ---")
     check_completed_tasks()
 
-    # Add all issues as tasks
+    # --- Add all issues as tasks ---
     for issue in all_issues:
         add_task(issue)
+
+    # --- Integrate: agent_memory (record issues) ---
+    if all_issues and memory_data:
+        log("--- Recording issues to memory ---")
+        for issue in all_issues:
+            issue_id = record_issue_to_memory(issue, memory_data)
+            if issue_id:
+                issue["memory_id"] = issue_id
+                log(f"MEMORY: recorded issue {issue_id}")
+
+    # --- Integrate: embed_rank (suggest skills for issues) ---
+    if all_issues:
+        log("--- Getting skill suggestions (embed_rank) ---")
+        for issue in all_issues:
+            suggestions = get_skill_suggestions(issue["description"])
+            if suggestions:
+                issue["suggested_skills"] = [
+                    s.get("name", "?") for s in suggestions[:3]
+                ]
+                log(f"EMBED_RANK: for '{issue['description'][:50]}...' → {', '.join(issue['suggested_skills'])}")
+            else:
+                log(f"EMBED_RANK: no suggestions for '{issue['description'][:50]}...'")
+        # Reload tasks to update with suggestions
+        save_tasks(load_tasks())  # force rewrite with enriched data
+        for issue in all_issues:
+            if "suggested_skills" in issue:
+                # Update the matching task in TASKS_FILE
+                tasks = load_tasks()
+                for t in tasks:
+                    if t.get("description") == issue["description"]:
+                        t["suggested_skills"] = issue["suggested_skills"]
+                save_tasks(tasks)
+
+    # --- Integrate: agent_alerts (send notifications) ---
+    if all_issues:
+        log("--- Dispatching alerts ---")
+        alerts = dispatch_alerts(all_issues)
+        if alerts:
+            log(f"ALERTS: {len(alerts)} alert(s) dispatched")
+            for a in alerts:
+                log(f"  [{a['severity'].upper()}] {a['description'][:60]}")
+        else:
+            log("ALERTS: no alerts dispatched (all already notified)")
+
+    # --- Save agent memory at cycle end ---
+    save_memory(memory_data)
 
     log(f"CYCLE COMPLETE: {len(all_issues)} issue(s) detected")
     return all_issues
@@ -447,6 +615,8 @@ def cmd_status():
         print(f"\n--- Active tasks ({len(tasks)}) ---")
         for t in tasks:
             print(f"  [{t.get('type', '?')}] {t.get('description', '?')}")
+            if "suggested_skills" in t:
+                print(f"      → suggested: {', '.join(t['suggested_skills'])}")
     else:
         print("\nNo active tasks")
 
@@ -458,6 +628,8 @@ def cmd_once():
         print(f"\n{len(issues)} issue(s) detected:")
         for issue in issues:
             print(f"  • [{issue['type']}] {issue['description']}")
+            if "suggested_skills" in issue:
+                print(f"    → try: {', '.join(issue['suggested_skills'])}")
     else:
         print("\nNo issues detected. System healthy.")
     return issues
