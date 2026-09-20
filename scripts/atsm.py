@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""ATSM: Adaptive Task-Skill Matching engine v1.1.
+"""ATSM: Adaptive Task-Skill Matching engine v1.2.
 
 Ranks skills by relevance to a task and historical success rate.
 Uses Bayesian Beta-Binomial update with exponential recency decay.
+
+Improvements in v1.2 (multi-agent awareness):
+  - agent_id parameter on rank_skills() and record()
+  - Cross-agent learning: successes from other agents boost rankings
+  - --agent CLI flag for rank and record commands
 
 Improvements in v1.1:
   - Caching layer: skills, DB, TF-IDF vectors cached with mtime-based invalidation
@@ -10,8 +15,8 @@ Improvements in v1.1:
   - Robust YAML frontmatter parser for multi-line descriptions
 
 Usage:
-    python3 atsm.py rank [--dedup] "task description"
-    python3 atsm.py record <skill_name> <0|1>
+    python3 atsm.py rank [--dedup] [--agent NAME] "task description"
+    python3 atsm.py record [--agent NAME] <skill_name> <0|1>
     python3 atsm.py stats
     python3 atsm.py benchmark
 """
@@ -40,6 +45,10 @@ PRIOR_SUCCESS = 1.0  # Beta prior alpha (pseudo-counts)
 PRIOR_FAILURE = 1.0  # Beta prior beta (pseudo-counts)
 DECAY_LAMBDA = 0.01  # recency decay per day
 MIN_OBSERVATIONS = 3 # min observations before trusting success rate
+
+# Multi-agent awareness
+CROSS_AGENT_WEIGHT = 0.3  # how much cross-agent success influences ranking (0-1)
+DEFAULT_AGENT = "default" # default agent identifier
 
 
 # --- Caching ---
@@ -318,12 +327,19 @@ def load_db() -> list[dict]:
     _cache.set_records(records, current_mtime)
     return records
 
-def append_record(skill_name: str, success: int):
-    """Append an outcome record and invalidate record cache."""
+def append_record(skill_name: str, success: int, agent_id: str = DEFAULT_AGENT):
+    """Append an outcome record and invalidate record cache.
+
+    Args:
+        skill_name: Name of the skill.
+        success: 1 for success, 0 for failure.
+        agent_id: Identifier of the agent reporting the outcome.
+    """
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     record = {
         "skill": skill_name,
         "success": int(success),
+        "agent": agent_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     with open(DB_FILE, "a", encoding="utf-8") as f:
@@ -333,11 +349,18 @@ def append_record(skill_name: str, success: int):
 
 
 # --- Statistics ---
-def compute_stats(records: list[dict]) -> dict[str, dict]:
+def compute_stats(records: list[dict], agent_id: str = None) -> dict[str, dict]:
     """Compute per-skill success statistics with recency decay.
     
     FIX v1.1: Uses effective_total (sum of decayed weights) for confidence
     instead of raw record count. This correctly handles stale observations.
+
+    Args:
+        records: List of outcome records.
+        agent_id: If provided, filter records to only this agent.
+    
+    Returns:
+        Dict mapping skill name -> stats dict.
     """
     now = datetime.now(timezone.utc)
     stats = defaultdict(lambda: {
@@ -346,6 +369,10 @@ def compute_stats(records: list[dict]) -> dict[str, dict]:
     })
     
     for rec in records:
+        # Filter by agent if specified
+        if agent_id is not None and rec.get("agent", DEFAULT_AGENT) != agent_id:
+            continue
+        
         skill = rec["skill"]
         success = rec["success"]
         ts = datetime.fromisoformat(rec["timestamp"])
@@ -374,14 +401,20 @@ def compute_stats(records: list[dict]) -> dict[str, dict]:
 
 
 # --- Ranking ---
-def rank_skills(task: str, top_k: int = 10, dedup: bool = True) -> tuple[list[dict], float]:
+def rank_skills(task: str, top_k: int = 10, dedup: bool = True, agent_id: str = DEFAULT_AGENT) -> tuple[list[dict], float]:
     """Rank skills by relevance and expected success for a task.
-    
+
+    Multi-agent awareness (v1.2):
+    - Computes per-agent stats and cross-agent stats separately.
+    - Cross-agent successes boost the success probability via weighted blend.
+    - If agent A succeeds with skill X, agent B also benefits.
+
     Args:
         task: Task description to rank against.
         top_k: Number of top results to return.
         dedup: If True, deduplicate skills by name (keep first encountered).
-    
+        agent_id: Agent requesting the ranking (for personalized + cross-agent learning).
+
     Returns (results, elapsed_seconds).
     """
     start = time.time()
@@ -391,7 +424,15 @@ def rank_skills(task: str, top_k: int = 10, dedup: bool = True) -> tuple[list[di
         return [], time.time() - start
     
     records = load_db()
-    stats = compute_stats(records)
+    
+    # Compute stats for the requesting agent and for all agents (cross-agent)
+    agent_stats = compute_stats(records, agent_id=agent_id)
+    global_stats = compute_stats(records, agent_id=None)
+    
+    # Track which agents have used each skill (for display)
+    skill_agents = defaultdict(set)
+    for rec in records:
+        skill_agents[rec["skill"]].add(rec.get("agent", DEFAULT_AGENT))
     
     task_tokens = tokenize(task)
     
@@ -405,23 +446,60 @@ def rank_skills(task: str, top_k: int = 10, dedup: bool = True) -> tuple[list[di
     for i, skill in enumerate(skills):
         relevance = ALPHA * cosine_sim(skill_vectors[i], task_vec) + BETA * keyword_overlap(skill["tokens"], task_tokens)
         
-        s = stats.get(skill["name"])
+        # Per-agent stats
+        s = agent_stats.get(skill["name"])
         if s and s["total"] > 0:
-            # Blend prior with observed success based on confidence
             prior_mean = PRIOR_SUCCESS / (PRIOR_SUCCESS + PRIOR_FAILURE)
-            success_prob = s["confidence"] * s["expected_success"] + (1 - s["confidence"]) * prior_mean
+            agent_success_prob = s["confidence"] * s["expected_success"] + (1 - s["confidence"]) * prior_mean
+            agent_confidence = s["confidence"]
         else:
-            success_prob = PRIOR_SUCCESS / (PRIOR_SUCCESS + PRIOR_FAILURE)
+            agent_success_prob = PRIOR_SUCCESS / (PRIOR_SUCCESS + PRIOR_FAILURE)
+            agent_confidence = 0.0
+        
+        # Cross-agent stats (exclude current agent to avoid double-counting)
+        gs = global_stats.get(skill["name"])
+        other_agents = skill_agents.get(skill["name"], set()) - {agent_id}
+        
+        if gs and gs["total"] > 0 and other_agents:
+            prior_mean = PRIOR_SUCCESS / (PRIOR_SUCCESS + PRIOR_FAILURE)
+            cross_success_prob = gs["confidence"] * gs["expected_success"] + (1 - gs["confidence"]) * prior_mean
+        else:
+            cross_success_prob = PRIOR_SUCCESS / (PRIOR_SUCCESS + PRIOR_FAILURE)
+        
+        # Blend: weighted combination of agent-specific and cross-agent success
+        # If agent has high confidence, rely more on own history; otherwise lean on cross-agent
+        if agent_confidence > 0:
+            w = agent_confidence * (1 - CROSS_AGENT_WEIGHT)
+            success_prob = w * agent_success_prob + (1 - w) * cross_success_prob
+        else:
+            # No agent-specific data: use cross-agent (or prior if no data at all)
+            success_prob = CROSS_AGENT_WEIGHT * cross_success_prob + (1 - CROSS_AGENT_WEIGHT) * (PRIOR_SUCCESS / (PRIOR_SUCCESS + PRIOR_FAILURE))
         
         final_score = relevance * success_prob
+        
+        # Count agents who successfully used this skill recently
+        recent_agents = set()
+        now = datetime.now(timezone.utc)
+        for rec in records:
+            if rec["skill"] == skill["name"] and rec["success"] == 1:
+                ts = datetime.fromisoformat(rec["timestamp"])
+                age_days = (now - ts).total_seconds() / 86400
+                if age_days <= 30:  # within 30 days
+                    recent_agents.add(rec.get("agent", DEFAULT_AGENT))
+        recent_agents -= {agent_id}  # exclude self
         
         results.append({
             "name": skill["name"],
             "description": skill["description"],
             "relevance": round(relevance, 4),
             "success_prob": round(success_prob, 4),
+            "agent_success_prob": round(agent_success_prob, 4),
+            "cross_success_prob": round(cross_success_prob, 4),
             "final_score": round(final_score, 4),
             "observations": s["total"] if s else 0,
+            "agent_observations": s["total"] if s else 0,
+            "cross_agents": len(recent_agents),
+            "total_agents": len(skill_agents.get(skill["name"], set())),
         })
     
     results.sort(key=lambda x: x["final_score"], reverse=True)
@@ -430,6 +508,21 @@ def rank_skills(task: str, top_k: int = 10, dedup: bool = True) -> tuple[list[di
 
 
 # --- CLI ---
+def parse_agent_flag(args: list[str]) -> tuple[list[str], str]:
+    """Extract --agent flag from args list, return remaining args and agent_id."""
+    agent_id = DEFAULT_AGENT
+    if "--agent" in args:
+        idx = args.index("--agent")
+        if idx + 1 < len(args):
+            agent_id = args[idx + 1]
+            # Remove --agent and its value from args
+            args = args[:idx] + args[idx + 2:]
+        else:
+            print("Error: --agent requires a value")
+            sys.exit(1)
+    return args, agent_id
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -439,11 +532,14 @@ def main():
     
     if command == "rank":
         if len(sys.argv) < 3:
-            print("Usage: atsm.py rank [--dedup] <task description>")
+            print("Usage: atsm.py rank [--dedup] [--agent NAME] <task description>")
             sys.exit(1)
+        # Parse flags
+        task_args = sys.argv[2:]
+        # Extract --agent flag
+        task_args, agent_id = parse_agent_flag(task_args)
         # Check for --dedup flag
         dedup = True
-        task_args = sys.argv[2:]
         if "--dedup" in task_args:
             dedup = True
             task_args.remove("--dedup")
@@ -451,29 +547,37 @@ def main():
             dedup = False
             task_args.remove("--no-dedup")
         task = " ".join(task_args)
-        results, elapsed = rank_skills(task, dedup=dedup)
+        results, elapsed = rank_skills(task, dedup=dedup, agent_id=agent_id)
         if not results:
             print("No skills found.")
             return
-        print(f"\n{'Rank':<5} {'Score':<8} {'Rel':<6} {'P(success)':<11} {'N':<4} {'Skill'}")
-        print("-" * 70)
+        print(f"\n{'Rank':<5} {'Score':<8} {'Rel':<6} {'P(success)':<11} {'N':<4} {'Cross':<6} {'Skill'}")
+        print("-" * 80)
         for i, r in enumerate(results, 1):
-            print(f"{i:<5} {r['final_score']:<8} {r['relevance']:<6} {r['success_prob']:<11} {r['observations']:<4} {r['name']}")
+            cross_info = f"({r['cross_agents']}a)" if r['cross_agents'] > 0 else ""
+            print(f"{i:<5} {r['final_score']:<8} {r['relevance']:<6} {r['success_prob']:<11} {r['observations']:<4} {cross_info:<6} {r['name']}")
             if r["description"]:
                 print(f"      └─ {r['description'][:60]}")
-        print(f"\n  ⚡ {elapsed*1000:.2f}ms")
+        print(f"\n  Agent: {agent_id}")
+        print(f"  ⚡ {elapsed*1000:.2f}ms")
     
     elif command == "record":
         if len(sys.argv) < 4:
-            print("Usage: atsm.py record <skill_name> <0|1>")
+            print("Usage: atsm.py record [--agent NAME] <skill_name> <0|1>")
             sys.exit(1)
-        skill_name = sys.argv[2]
-        success = int(sys.argv[3])
+        # Parse flags
+        record_args = sys.argv[2:]
+        record_args, agent_id = parse_agent_flag(record_args)
+        if len(record_args) < 2:
+            print("Usage: atsm.py record [--agent NAME] <skill_name> <0|1>")
+            sys.exit(1)
+        skill_name = record_args[0]
+        success = int(record_args[1])
         if success not in (0, 1):
             print("Success must be 0 or 1")
             sys.exit(1)
-        append_record(skill_name, success)
-        print(f"Recorded: {skill_name} → {'success' if success else 'failure'}")
+        append_record(skill_name, success, agent_id=agent_id)
+        print(f"Recorded [{agent_id}]: {skill_name} → {'success' if success else 'failure'}")
     
     elif command == "stats":
         records = load_db()
@@ -487,6 +591,13 @@ def main():
             print(f"{name:<35} {s['raw_successes']:<4} {s['raw_failures']:<4} "
                   f"{s['expected_success']:<12.3f} {s['total']:<4} "
                   f"{s['effective_total']:<7.2f} {s['confidence']:<6.2f}")
+        
+        # Multi-agent breakdown
+        agent_counts = defaultdict(int)
+        for rec in records:
+            agent_counts[rec.get("agent", DEFAULT_AGENT)] += 1
+        if len(agent_counts) > 1:
+            print(f"\n  Agents: {dict(agent_counts)}")
     
     elif command == "benchmark":
         """Run rank 10x and report timing."""
