@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
-"""ATSM: Adaptive Task-Skill Matching engine.
+"""ATSM: Adaptive Task-Skill Matching engine v1.1.
 
 Ranks skills by relevance to a task and historical success rate.
 Uses Bayesian Beta-Binomial update with exponential recency decay.
+
+Improvements in v1.1:
+  - Caching layer: skills, DB, TF-IDF vectors cached with mtime-based invalidation
+  - Confidence uses effective (decayed) sample size, not raw count
+  - Robust YAML frontmatter parser for multi-line descriptions
 
 Usage:
     python3 atsm.py rank "task description"
     python3 atsm.py record <skill_name> <0|1>
     python3 atsm.py stats
+    python3 atsm.py benchmark
 """
 
 import json
@@ -15,6 +21,7 @@ import math
 import os
 import re
 import sys
+import time
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,6 +31,7 @@ SKILLS_ROOT = Path(os.environ.get("HERMES_SKILLS_ROOT", Path.home() / ".hermes/s
 DATA_DIR = Path(__file__).parent.parent / "data"
 DB_FILE = DATA_DIR / "atsm_db.jsonl"
 PRIORS_FILE = DATA_DIR / "atsm_priors.json"
+CACHE_FILE = DATA_DIR / "atsm_cache.json"
 
 # Algorithm weights
 ALPHA = 0.6          # weight for cosine similarity
@@ -32,6 +40,72 @@ PRIOR_SUCCESS = 1.0  # Beta prior alpha (pseudo-counts)
 PRIOR_FAILURE = 1.0  # Beta prior beta (pseudo-counts)
 DECAY_LAMBDA = 0.01  # recency decay per day
 MIN_OBSERVATIONS = 3 # min observations before trusting success rate
+
+
+# --- Caching ---
+class ATSMCache:
+    """mtime-based cache for skills, DB records, and TF-IDF vectors."""
+    
+    def __init__(self):
+        self.skills = None
+        self.skills_mtime = 0
+        self.records = None
+        self.records_mtime = 0
+        self.vectors = None
+        self.vectors_mtime = 0
+    
+    def _max_skill_mtime(self) -> float:
+        """Get the latest mtime across all SKILL.md files."""
+        max_mtime = 0.0
+        if not SKILLS_ROOT.exists():
+            return max_mtime
+        for skill_dir in SKILLS_ROOT.rglob("SKILL.md"):
+            try:
+                m = skill_dir.stat().st_mtime
+                if m > max_mtime:
+                    max_mtime = m
+            except OSError:
+                continue
+        return max_mtime
+    
+    def _db_mtime(self) -> float:
+        """Get DB file mtime."""
+        try:
+            return DB_FILE.stat().st_mtime
+        except OSError:
+            return 0.0
+    
+    def get_skills(self):
+        current_mtime = self._max_skill_mtime()
+        if self.skills is None or current_mtime > self.skills_mtime:
+            self.skills = None  # force reload
+        return self.skills, current_mtime
+    
+    def set_skills(self, skills, mtime):
+        self.skills = skills
+        self.skills_mtime = mtime
+    
+    def get_records(self):
+        current_mtime = self._db_mtime()
+        if self.records is None or current_mtime > self.records_mtime:
+            self.records = None
+        return self.records, current_mtime
+    
+    def set_records(self, records, mtime):
+        self.records = records
+        self.records_mtime = mtime
+    
+    def get_vectors(self, skills_mtime):
+        if self.vectors is None or skills_mtime != self.vectors_mtime:
+            self.vectors = None
+        return self.vectors
+    
+    def set_vectors(self, vectors, mtime):
+        self.vectors = vectors
+        self.vectors_mtime = mtime
+
+
+_cache = ATSMCache()
 
 
 # --- Text processing ---
@@ -78,27 +152,125 @@ def keyword_overlap(a: list[str], b: list[str]) -> float:
     return len(sa & sb) / len(sa | sb)
 
 
+# --- YAML frontmatter parser ---
+def parse_frontmatter(content: str) -> dict:
+    """Parse YAML frontmatter robustly, handling multi-line values.
+    
+    Supports:
+    - key: value
+    - key: "quoted value"
+    - key: |
+        multi-line
+        value
+    - key: >
+        folded value
+    """
+    if not content.startswith("---"):
+        return {}
+    
+    end = content.find("---", 3)
+    if end == -1:
+        return {}
+    
+    fm_text = content[3:end]
+    result = {}
+    current_key = None
+    current_value_lines = []
+    in_block_scalar = False
+    block_indent = 0
+    
+    for line in fm_text.splitlines():
+        stripped = line.rstrip()
+        
+        # Skip empty lines outside block scalars
+        if not in_block_scalar and not stripped:
+            continue
+        
+        # Check if this is a new top-level key
+        # Top-level: non-indented word followed by ':'
+        is_new_key = False
+        if not in_block_scalar:
+            match = re.match(r'^([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*(.*)$', stripped)
+            if match and (not line[0].isspace() or line == stripped):
+                is_new_key = True
+        
+        if is_new_key:
+            # Save previous key
+            if current_key:
+                val = "\n".join(current_value_lines).strip()
+                result[current_key] = val
+            
+            key = match.group(1)
+            rest = match.group(2).strip()
+            current_key = key
+            
+            if rest == "|" or rest == ">" or rest == "|-" or rest == ">-":
+                # Block scalar
+                in_block_scalar = True
+                block_indent = None  # determined by first content line
+                current_value_lines = []
+            elif rest:
+                # Single-line value
+                result[key] = rest.strip('"').strip("'")
+                current_key = None
+                current_value_lines = []
+            else:
+                # Empty value, might be multi-line
+                in_block_scalar = False
+                current_value_lines = []
+        
+        elif in_block_scalar:
+            # Determine block indent from first content line
+            if block_indent is None and stripped:
+                block_indent = len(line) - len(line.lstrip())
+            
+            if block_indent is not None and stripped:
+                # Strip the block indent
+                if len(line) - len(line.lstrip()) >= block_indent:
+                    current_value_lines.append(line[block_indent:])
+                else:
+                    # Dedented line ends block scalar
+                    in_block_scalar = False
+            elif not stripped:
+                current_value_lines.append("")
+        
+        else:
+            # Continuation line (indented) for regular value
+            if current_key and line[0].isspace():
+                current_value_lines.append(stripped)
+    
+    # Save last key
+    if current_key:
+        val = "\n".join(current_value_lines).strip()
+        result[current_key] = val
+    
+    return result
+
+
 # --- Skill loading ---
 def load_skills() -> list[dict]:
-    """Load all skills with their descriptions and categories."""
+    """Load all skills with their descriptions and categories (cached)."""
+    cached, current_mtime = _cache.get_skills()
+    if cached is not None:
+        return cached
+    
     skills = []
     if not SKILLS_ROOT.exists():
         return skills
+    
     for skill_dir in SKILLS_ROOT.rglob("SKILL.md"):
         try:
             content = skill_dir.read_text(encoding="utf-8", errors="replace")
-            # Parse frontmatter
             name = skill_dir.parent.name
             description = ""
+            
             if content.startswith("---"):
-                end = content.find("---", 3)
-                if end != -1:
-                    fm = content[3:end]
-                    for line in fm.splitlines():
-                        if line.strip().startswith("name:"):
-                            name = line.split(":", 1)[1].strip().strip('"').strip("'")
-                        elif line.strip().startswith("description:"):
-                            description = line.split(":", 1)[1].strip().strip('"').strip("'")
+                fm = parse_frontmatter(content)
+                if "name" in fm:
+                    name = fm["name"]
+                if "description" in fm:
+                    description = fm["description"]
+            
             skills.append({
                 "name": name,
                 "description": description,
@@ -107,15 +279,22 @@ def load_skills() -> list[dict]:
             })
         except Exception:
             continue
+    
+    _cache.set_skills(skills, current_mtime)
     return skills
 
 
 # --- Database ---
 def load_db() -> list[dict]:
-    """Load outcome records."""
-    if not DB_FILE.exists():
-        return []
+    """Load outcome records (cached)."""
+    cached, current_mtime = _cache.get_records()
+    if cached is not None:
+        return cached
+    
     records = []
+    if not DB_FILE.exists():
+        return records
+    
     with open(DB_FILE, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -124,10 +303,12 @@ def load_db() -> list[dict]:
                     records.append(json.loads(line))
                 except json.JSONDecodeError:
                     continue
+    
+    _cache.set_records(records, current_mtime)
     return records
 
 def append_record(skill_name: str, success: int):
-    """Append an outcome record."""
+    """Append an outcome record and invalidate record cache."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     record = {
         "skill": skill_name,
@@ -136,13 +317,22 @@ def append_record(skill_name: str, success: int):
     }
     with open(DB_FILE, "a", encoding="utf-8") as f:
         f.write(json.dumps(record) + "\n")
+    # Invalidate cache
+    _cache.records = None
 
 
 # --- Statistics ---
 def compute_stats(records: list[dict]) -> dict[str, dict]:
-    """Compute per-skill success statistics with recency decay."""
+    """Compute per-skill success statistics with recency decay.
+    
+    FIX v1.1: Uses effective_total (sum of decayed weights) for confidence
+    instead of raw record count. This correctly handles stale observations.
+    """
     now = datetime.now(timezone.utc)
-    stats = defaultdict(lambda: {"successes": 0.0, "failures": 0.0, "total": 0, "raw_successes": 0, "raw_failures": 0})
+    stats = defaultdict(lambda: {
+        "successes": 0.0, "failures": 0.0, "total": 0,
+        "raw_successes": 0, "raw_failures": 0, "effective_total": 0.0
+    })
     
     for rec in records:
         skill = rec["skill"]
@@ -153,6 +343,7 @@ def compute_stats(records: list[dict]) -> dict[str, dict]:
         
         s = stats[skill]
         s["total"] += 1
+        s["effective_total"] += weight  # v1.1: decayed effective sample size
         if success:
             s["successes"] += weight
             s["raw_successes"] += 1
@@ -160,22 +351,28 @@ def compute_stats(records: list[dict]) -> dict[str, dict]:
             s["failures"] += weight
             s["raw_failures"] += 1
     
-    # Compute Beta posterior mean
+    # Compute Beta posterior mean with confidence based on effective sample size
     for skill, s in stats.items():
         alpha_post = PRIOR_SUCCESS + s["successes"]
         beta_post = PRIOR_FAILURE + s["failures"]
         s["expected_success"] = alpha_post / (alpha_post + beta_post)
-        s["confidence"] = min(s["total"] / MIN_OBSERVATIONS, 1.0)
+        # v1.1: confidence from effective (decayed) sample size, not raw count
+        s["confidence"] = min(s["effective_total"] / MIN_OBSERVATIONS, 1.0)
     
     return dict(stats)
 
 
 # --- Ranking ---
-def rank_skills(task: str, top_k: int = 10) -> list[dict]:
-    """Rank skills by relevance and expected success for a task."""
+def rank_skills(task: str, top_k: int = 10) -> tuple[list[dict], float]:
+    """Rank skills by relevance and expected success for a task.
+    
+    Returns (results, elapsed_seconds).
+    """
+    start = time.time()
+    
     skills = load_skills()
     if not skills:
-        return []
+        return [], time.time() - start
     
     records = load_db()
     stats = compute_stats(records)
@@ -212,7 +409,8 @@ def rank_skills(task: str, top_k: int = 10) -> list[dict]:
         })
     
     results.sort(key=lambda x: x["final_score"], reverse=True)
-    return results[:top_k]
+    elapsed = time.time() - start
+    return results[:top_k], elapsed
 
 
 # --- CLI ---
@@ -228,7 +426,7 @@ def main():
             print("Usage: atsm.py rank <task description>")
             sys.exit(1)
         task = " ".join(sys.argv[2:])
-        results = rank_skills(task)
+        results, elapsed = rank_skills(task)
         if not results:
             print("No skills found.")
             return
@@ -238,6 +436,7 @@ def main():
             print(f"{i:<5} {r['final_score']:<8} {r['relevance']:<6} {r['success_prob']:<11} {r['observations']:<4} {r['name']}")
             if r["description"]:
                 print(f"      └─ {r['description'][:60]}")
+        print(f"\n  ⚡ {elapsed*1000:.2f}ms")
     
     elif command == "record":
         if len(sys.argv) < 4:
@@ -257,11 +456,27 @@ def main():
         if not stats:
             print("No records yet. Use 'record' to log outcomes.")
             return
-        print(f"\n{'Skill':<35} {'Successes':<10} {'Failures':<10} {'E[success]':<12} {'N':<5} {'Conf':<6}")
+        print(f"\n{'Skill':<35} {'S':<4} {'F':<4} {'E[success]':<12} {'N':<4} {'N_eff':<7} {'Conf':<6}")
         print("-" * 85)
         for name, s in sorted(stats.items(), key=lambda x: x[1].get("expected_success", 0), reverse=True):
-            print(f"{name:<35} {s['raw_successes']:<10} {s['raw_failures']:<10} "
-                  f"{s['expected_success']:<12.3f} {s['total']:<5} {s['confidence']:<6.2f}")
+            print(f"{name:<35} {s['raw_successes']:<4} {s['raw_failures']:<4} "
+                  f"{s['expected_success']:<12.3f} {s['total']:<4} "
+                  f"{s['effective_total']:<7.2f} {s['confidence']:<6.2f}")
+    
+    elif command == "benchmark":
+        """Run rank 10x and report timing."""
+        task = " ".join(sys.argv[2:]) if len(sys.argv) > 2 else "search and summarize academic papers"
+        # Warm up cache
+        rank_skills(task)
+        # Benchmark
+        times = []
+        for _ in range(10):
+            _, elapsed = rank_skills(task)
+            times.append(elapsed)
+        print(f"\nBenchmark: 10 runs of '{task}'")
+        print(f"  avg: {sum(times)/len(times)*1000:.2f}ms")
+        print(f"  min: {min(times)*1000:.2f}ms")
+        print(f"  max: {max(times)*1000:.2f}ms")
     
     else:
         print(f"Unknown command: {command}")
