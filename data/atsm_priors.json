@@ -1,11 +1,11 @@
 {
   "_meta": {
-    "updated_at": "2026-09-20T20:39:23.726364+00:00",
+    "updated_at": "2026-09-21T00:08:13.689042+00:00",
     "decay_lambda": 0.01,
     "prior_alpha": 1.0,
     "prior_beta": 1.0,
     "total_records": 41,
-    "skills_tracked": 7
+    "skills_tracked": 8
   },
   "_global": {
     "alpha": 1.0,
@@ -52,5 +52,11 @@
     "beta": 6.9272,
     "expected_success": 0.1261,
     "observations": 6
+  },
+  "embed_rank": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
   }
 }
