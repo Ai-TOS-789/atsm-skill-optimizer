@@ -1,0 +1,10 @@
+{
+  "focus_areas": [
+    "productivity",
+    "testing"
+  ],
+  "skill_practice_enabled": true,
+  "max_concurrent_goals": 3,
+  "auto_self_modify": true,
+  "goal_history_depth": 10
+}

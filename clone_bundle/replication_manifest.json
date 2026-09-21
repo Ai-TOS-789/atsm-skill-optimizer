@@ -1,0 +1,71 @@
+{
+  "version": "1.0",
+  "created_at": "2026-09-21T05:47:28.108782+00:00",
+  "source": "/home/aorus/.hermes/skills/productivity/atsm-skill-optimizer",
+  "files_copied": [
+    "agent_memory.json",
+    "atsm_db.jsonl",
+    "atsm_priors.json",
+    "knowledge_graph.json",
+    "agent_preferences.json",
+    "evolve_prefs.json",
+    "chains_db.jsonl",
+    "goals_db.json",
+    "swarm_db.jsonl",
+    "swarm_stats.json"
+  ],
+  "missing_files": [],
+  "file_count": 10,
+  "total_bytes": 100858,
+  "hashes": {
+    "agent_memory.json": "5c3d130fbb020487",
+    "atsm_db.jsonl": "89d6f0823048162f",
+    "atsm_priors.json": "236cf66ff252bef9",
+    "knowledge_graph.json": "5480a6aed6638f0d"
+  },
+  "lessons_count": 6,
+  "lessons": [
+    {
+      "id": "38630fdb",
+      "timestamp": "2026-09-20T21:45:08.000147+00:00",
+      "text": "arxiv skill works best with site:arxiv.org filter",
+      "context": "research-workflow",
+      "applied_count": 0
+    },
+    {
+      "id": "8f2e8fd3",
+      "timestamp": "2026-09-21T04:54:33.526485+00:00",
+      "text": "Cycle #9a91fb13: 2 issues",
+      "context": "cycle_summary",
+      "applied_count": 0
+    },
+    {
+      "id": "2668e468",
+      "timestamp": "2026-09-21T04:58:34.714136+00:00",
+      "text": "Processed proactive task: Skill 'gif-search' has low success rate (0%, 2 attempts) \u2014 r \u2014 failure",
+      "context": "proactive-task",
+      "applied_count": 0
+    },
+    {
+      "id": "ca88b74c",
+      "timestamp": "2026-09-21T04:58:34.741930+00:00",
+      "text": "Auto-created skill for detected tool: docker",
+      "context": "self-modify",
+      "applied_count": 0
+    },
+    {
+      "id": "50570dee",
+      "timestamp": "2026-09-21T05:00:01.383662+00:00",
+      "text": "Processed proactive task: Skill 'gif-search' has low success rate (0%, 2 attempts) \u2014 r \u2014 success",
+      "context": "proactive-task",
+      "applied_count": 0
+    },
+    {
+      "id": "4098ecd3",
+      "timestamp": "2026-09-21T05:03:41.245043+00:00",
+      "text": "Cycle #972fcca9: 2 issues",
+      "context": "cycle_summary",
+      "applied_count": 0
+    }
+  ]
+}

@@ -1,0 +1,202 @@
+{
+  "goal_4b90acb0": {
+    "id": "goal_4b90acb0",
+    "description": "research AI papers",
+    "root": {
+      "id": "goal_4b90acb0_root",
+      "description": "research AI papers",
+      "status": "pending",
+      "parent": null,
+      "subgoals": [
+        {
+          "id": "goal_4b90acb0_sg_1",
+          "description": "Search and collect relevant materials",
+          "status": "pending",
+          "parent": "goal_4b90acb0_root",
+          "subgoals": [],
+          "skills": [
+            {
+              "name": "obsidian",
+              "description": "Read, search, create, and edit notes in the Obsidian vault.",
+              "relevance": 0.1367,
+              "success_prob": 0.8331,
+              "final_score": 0.1138,
+              "observations": 4
+            },
+            {
+              "name": "box",
+              "description": "Box manages cloud files, sharing, search, and metadata.",
+              "relevance": 0.1491,
+              "success_prob": 0.5,
+              "final_score": 0.0745,
+              "observations": 2
+            },
+            {
+              "name": "arxiv",
+              "description": "Search arXiv papers by keyword, author, category, or ID.",
+              "relevance": 0.0767,
+              "success_prob": 0.7986,
+              "final_score": 0.0612,
+              "observations": 3
+            }
+          ],
+          "created_at": "2026-09-21T04:43:05.145904+00:00",
+          "completed_at": null,
+          "outcome": null
+        },
+        {
+          "id": "goal_4b90acb0_sg_2",
+          "description": "Analyze and synthesize findings",
+          "status": "pending",
+          "parent": "goal_4b90acb0_root",
+          "subgoals": [],
+          "skills": [
+            {
+              "name": "obsidian",
+              "description": "Read, search, create, and edit notes in the Obsidian vault.",
+              "relevance": 0.0586,
+              "success_prob": 0.8331,
+              "final_score": 0.0488,
+              "observations": 4
+            },
+            {
+              "name": "songwriting-and-ai-music",
+              "description": "Songwriting craft and Suno AI music prompts.",
+              "relevance": 0.0837,
+              "success_prob": 0.5555,
+              "final_score": 0.0465,
+              "observations": 1
+            },
+            {
+              "name": "feedback-loop",
+              "description": "Capture user corrections and apply lessons.",
+              "relevance": 0.0685,
+              "success_prob": 0.5553,
+              "final_score": 0.038,
+              "observations": 1
+            }
+          ],
+          "created_at": "2026-09-21T04:43:05.158731+00:00",
+          "completed_at": null,
+          "outcome": null
+        },
+        {
+          "id": "goal_4b90acb0_sg_3",
+          "description": "Create outline and structure",
+          "status": "pending",
+          "parent": "goal_4b90acb0_root",
+          "subgoals": [],
+          "skills": [
+            {
+              "name": "obsidian",
+              "description": "Read, search, create, and edit notes in the Obsidian vault.",
+              "relevance": 0.1573,
+              "success_prob": 0.8331,
+              "final_score": 0.131,
+              "observations": 4
+            },
+            {
+              "name": "hermes-agent-skill-authoring",
+              "description": "Author in-repo SKILL.md files: frontmatter and structure.",
+              "relevance": 0.1801,
+              "success_prob": 0.5,
+              "final_score": 0.0901,
+              "observations": 0
+            },
+            {
+              "name": "docx",
+              "description": "Create, read, edit, template, and review Word .docx files.",
+              "relevance": 0.1658,
+              "success_prob": 0.5,
+              "final_score": 0.0829,
+              "observations": 0
+            }
+          ],
+          "created_at": "2026-09-21T04:43:05.171609+00:00",
+          "completed_at": null,
+          "outcome": null
+        },
+        {
+          "id": "goal_4b90acb0_sg_4",
+          "description": "Draft content",
+          "status": "pending",
+          "parent": "goal_4b90acb0_root",
+          "subgoals": [],
+          "skills": [
+            {
+              "name": "youtube-content",
+              "description": "YouTube transcripts to summaries, threads, blogs.",
+              "relevance": 0.179,
+              "success_prob": 0.5555,
+              "final_score": 0.0994,
+              "observations": 1
+            },
+            {
+              "name": "email-inbox-triage",
+              "description": "Triage an inbox: prioritize threads, draft replies safely.",
+              "relevance": 0.1422,
+              "success_prob": 0.5,
+              "final_score": 0.0711,
+              "observations": 0
+            },
+            {
+              "name": "agent-self-learning",
+              "description": "Capture experience, extract patterns, and improve skills.",
+              "relevance": 0.0,
+              "success_prob": 0.5,
+              "final_score": 0.0,
+              "observations": 0
+            }
+          ],
+          "created_at": "2026-09-21T04:43:05.184130+00:00",
+          "completed_at": null,
+          "outcome": null
+        },
+        {
+          "id": "goal_4b90acb0_sg_5",
+          "description": "Review and refine",
+          "status": "pending",
+          "parent": "goal_4b90acb0_root",
+          "subgoals": [],
+          "skills": [
+            {
+              "name": "sdlc-review",
+              "description": "Review Kanban handoffs and route verified outcomes.",
+              "relevance": 0.2925,
+              "success_prob": 0.5555,
+              "final_score": 0.1625,
+              "observations": 1
+            },
+            {
+              "name": "docx",
+              "description": "Create, read, edit, template, and review Word .docx files.",
+              "relevance": 0.1981,
+              "success_prob": 0.5,
+              "final_score": 0.0991,
+              "observations": 0
+            },
+            {
+              "name": "requesting-code-review",
+              "description": "Pre-commit review: security scan, quality gates, auto-fix.",
+              "relevance": 0.1689,
+              "success_prob": 0.5,
+              "final_score": 0.0844,
+              "observations": 0
+            }
+          ],
+          "created_at": "2026-09-21T04:43:05.196414+00:00",
+          "completed_at": null,
+          "outcome": null
+        }
+      ],
+      "skills": [],
+      "created_at": "2026-09-21T04:43:05.145896+00:00",
+      "completed_at": null,
+      "outcome": null
+    },
+    "status": "pending",
+    "created_at": "2026-09-21T04:43:05.145888+00:00",
+    "completed_at": null,
+    "decomposition_feedback": []
+  }
+}

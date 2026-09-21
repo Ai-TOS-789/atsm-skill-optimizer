@@ -1,0 +1,6 @@
+{
+  "auto_goal_generation": true,
+  "auto_skill_heal": true,
+  "auto_skill_create": true,
+  "verbose": true
+}
