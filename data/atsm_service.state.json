@@ -1,0 +1,36 @@
+{
+  "services": {
+    "gateway": {
+      "status": "running",
+      "exited_at": "2026-09-21T05:23:22.350438+00:00",
+      "exit_code": 1,
+      "pid": 1475947,
+      "restarted_at": "2026-09-21T05:23:22.352379+00:00"
+    },
+    "self_evolve": {
+      "status": "running",
+      "exited_at": "2026-09-21T05:23:22.355048+00:00",
+      "exit_code": 0,
+      "pid": 1475948,
+      "restarted_at": "2026-09-21T05:23:22.356155+00:00"
+    },
+    "proactive": {
+      "status": "running",
+      "exited_at": "2026-09-21T05:23:22.356328+00:00",
+      "exit_code": 0,
+      "pid": 1475949,
+      "restarted_at": "2026-09-21T05:23:22.357382+00:00"
+    },
+    "sys_monitor": {
+      "status": "running",
+      "started_at": "2026-09-21T05:23:02.340418+00:00",
+      "pid": 1475598
+    },
+    "agent_alerts": {
+      "status": "running",
+      "started_at": "2026-09-21T05:23:02.341477+00:00",
+      "pid": 1475601
+    }
+  },
+  "started_at": "2026-09-21T05:23:02.335580+00:00"
+}
