@@ -1,0 +1,45 @@
+{
+  "strategy_performance": {
+    "atsm_rank": {
+      "wins": 1,
+      "total": 1,
+      "avg_confidence": 0.0
+    },
+    "embedding_rank": {
+      "wins": 1,
+      "total": 1,
+      "avg_confidence": 0.0
+    },
+    "random_explore": {
+      "wins": 0,
+      "total": 1,
+      "avg_confidence": 0.0
+    },
+    "causal_inference": {
+      "wins": 1,
+      "total": 1,
+      "avg_confidence": 0.0
+    }
+  },
+  "problem_type_performance": {
+    "research": {
+      "atsm_rank": {
+        "wins": 1,
+        "total": 1
+      },
+      "embedding_rank": {
+        "wins": 1,
+        "total": 1
+      },
+      "random_explore": {
+        "wins": 0,
+        "total": 1
+      },
+      "causal_inference": {
+        "wins": 1,
+        "total": 1
+      }
+    }
+  },
+  "total_solves": 1
+}

@@ -1,0 +1,15 @@
+{
+  "decompositions": {
+    "research_and_create": {
+      "success": 1,
+      "total": 1,
+      "history": [
+        {
+          "goal_id": "goal_0c9dccab",
+          "outcome": 1,
+          "timestamp": "2026-09-21T02:06:43.555155+00:00"
+        }
+      ]
+    }
+  }
+}

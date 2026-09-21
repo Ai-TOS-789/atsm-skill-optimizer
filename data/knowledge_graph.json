@@ -1,0 +1,1102 @@
+{
+  "meta": {
+    "built_at": "2026-09-21T02:10:26.304087+00:00",
+    "num_skills": 69,
+    "num_records": 27,
+    "num_cooccurrence_edges": 36,
+    "num_sequence_edges": 11,
+    "num_similarity_edges": 83,
+    "num_causal_edges": 0
+  },
+  "nodes": {
+    "agent-self-learning": {
+      "name": "agent-self-learning",
+      "description": "Capture experience, extract patterns, and improve skills.",
+      "neighbors": {
+        "pattern-library": {
+          "similarity": 0.2146
+        },
+        "feedback-loop": {
+          "similarity": 0.1503
+        },
+        "self-modification": {
+          "similarity": 0.2767
+        },
+        "cross-skill-learning": {
+          "similarity": 0.3131
+        },
+        "hermes-agent": {
+          "similarity": 0.163
+        }
+      }
+    },
+    "pattern-library": {
+      "name": "pattern-library",
+      "description": "Curate, deduplicate, and serve patterns across skills.",
+      "neighbors": {
+        "agent-self-learning": {
+          "similarity": 0.2146
+        },
+        "cross-skill-learning": {
+          "similarity": 0.2058
+        }
+      }
+    },
+    "feedback-loop": {
+      "name": "feedback-loop",
+      "description": "Capture user corrections and apply lessons.",
+      "neighbors": {
+        "arxiv": {
+          "co-occurrence": 1
+        },
+        "box": {
+          "co-occurrence": 1
+        },
+        "gif-search": {
+          "co-occurrence": 1
+        },
+        "github": {
+          "co-occurrence": 1
+        },
+        "obsidian": {
+          "co-occurrence": 1
+        },
+        "pdf": {
+          "co-occurrence": 1
+        },
+        "powerpoint": {
+          "co-occurrence": 1
+        },
+        "xlsx": {
+          "co-occurrence": 1
+        },
+        "agent-self-learning": {
+          "similarity": 0.1503
+        }
+      }
+    },
+    "self-modification": {
+      "name": "self-modification",
+      "description": "Modify agent source, tools, and prompt for self-improvement.",
+      "neighbors": {
+        "agent-self-learning": {
+          "similarity": 0.2767
+        },
+        "hermes-agent": {
+          "similarity": 0.1355
+        }
+      }
+    },
+    "cross-skill-learning": {
+      "name": "cross-skill-learning",
+      "description": "Share patterns and insights between related skills.",
+      "neighbors": {
+        "agent-self-learning": {
+          "similarity": 0.3131
+        },
+        "pattern-library": {
+          "similarity": 0.2058
+        },
+        "hermes-agent-skill-authoring": {
+          "similarity": 0.1789
+        },
+        "atsm-skill-optimizer": {
+          "similarity": 0.1679
+        }
+      }
+    },
+    "ascii-video": {
+      "name": "ascii-video",
+      "description": "ASCII video: convert video/audio to colored ASCII MP4/GIF.",
+      "neighbors": {
+        "manim-video": {
+          "similarity": 0.1627
+        }
+      }
+    },
+    "manim-video": {
+      "name": "manim-video",
+      "description": "Manim CE animations: 3Blue1Brown math/algo videos.",
+      "neighbors": {
+        "ascii-video": {
+          "similarity": 0.1627
+        }
+      }
+    },
+    "design-md": {
+      "name": "design-md",
+      "description": "Author/validate/export Google's DESIGN.md token spec files.",
+      "neighbors": {
+        "claude-design": {
+          "similarity": 0.252
+        },
+        "popular-web-designs": {
+          "similarity": 0.1187
+        },
+        "hermes-agent-skill-authoring": {
+          "similarity": 0.2276
+        },
+        "agents-md-init": {
+          "similarity": 0.2509
+        }
+      }
+    },
+    "architecture-diagram": {
+      "name": "architecture-diagram",
+      "description": "Dark-themed SVG architecture/cloud/infra diagrams as HTML.",
+      "neighbors": {
+        "popular-web-designs": {
+          "similarity": 0.1284
+        }
+      }
+    },
+    "songwriting-and-ai-music": {
+      "name": "songwriting-and-ai-music",
+      "description": "Songwriting craft and Suno AI music prompts.",
+      "neighbors": {
+        "humanizer": {
+          "similarity": 0.191
+        }
+      }
+    },
+    "claude-design": {
+      "name": "claude-design",
+      "description": "Design one-off HTML artifacts (landing, deck, prototype).",
+      "neighbors": {
+        "design-md": {
+          "similarity": 0.252
+        },
+        "popular-web-designs": {
+          "similarity": 0.1948
+        },
+        "claude-code": {
+          "similarity": 0.1668
+        }
+      }
+    },
+    "humanizer": {
+      "name": "humanizer",
+      "description": "Humanize text: strip AI-isms and add real voice.",
+      "neighbors": {
+        "songwriting-and-ai-music": {
+          "similarity": 0.191
+        }
+      }
+    },
+    "baoyu-infographic": {
+      "name": "baoyu-infographic",
+      "description": "Infographics: 21 layouts x 21 styles (信息图, 可视化).",
+      "neighbors": {}
+    },
+    "p5js": {
+      "name": "p5js",
+      "description": "p5.js sketches: gen art, shaders, interactive, 3D.",
+      "neighbors": {}
+    },
+    "popular-web-designs": {
+      "name": "popular-web-designs",
+      "description": "54 real design systems (Stripe, Linear, Vercel) as HTML/CSS.",
+      "neighbors": {
+        "design-md": {
+          "similarity": 0.1187
+        },
+        "architecture-diagram": {
+          "similarity": 0.1284
+        },
+        "claude-design": {
+          "similarity": 0.1948
+        }
+      }
+    },
+    "sdlc-review": {
+      "name": "sdlc-review",
+      "description": "Review Kanban handoffs and route verified outcomes.",
+      "neighbors": {
+        "requesting-code-review": {
+          "similarity": 0.2277
+        },
+        "weekly-review-planning": {
+          "similarity": 0.1117
+        },
+        "docx": {
+          "similarity": 0.1621
+        },
+        "opencode": {
+          "similarity": 0.1351
+        }
+      }
+    },
+    "apple-reminders": {
+      "name": "apple-reminders",
+      "description": "Apple Reminders via remindctl: add, list, complete.",
+      "neighbors": {
+        "findmy": {
+          "similarity": 0.1631
+        },
+        "apple-notes": {
+          "similarity": 0.3038
+        }
+      }
+    },
+    "imessage": {
+      "name": "imessage",
+      "description": "Send and receive iMessages/SMS via the imsg CLI on macOS.",
+      "neighbors": {
+        "findmy": {
+          "similarity": 0.1774
+        },
+        "computer-use": {
+          "similarity": 0.1389
+        }
+      }
+    },
+    "findmy": {
+      "name": "findmy",
+      "description": "Track Apple devices/AirTags via FindMy.app on macOS.",
+      "neighbors": {
+        "apple-reminders": {
+          "similarity": 0.1631
+        },
+        "imessage": {
+          "similarity": 0.1774
+        },
+        "apple-notes": {
+          "similarity": 0.1713
+        }
+      }
+    },
+    "apple-notes": {
+      "name": "apple-notes",
+      "description": "Manage Apple Notes via memo CLI: create, search, edit.",
+      "neighbors": {
+        "apple-reminders": {
+          "similarity": 0.3038
+        },
+        "findmy": {
+          "similarity": 0.1713
+        },
+        "xurl": {
+          "similarity": 0.1081
+        },
+        "obsidian": {
+          "similarity": 0.3104
+        },
+        "powerpoint": {
+          "similarity": 0.1101
+        },
+        "xlsx": {
+          "similarity": 0.1119
+        },
+        "meeting-action-items": {
+          "similarity": 0.1351
+        },
+        "docx": {
+          "similarity": 0.1112
+        },
+        "pdf": {
+          "similarity": 0.1056
+        },
+        "gif-search": {
+          "similarity": 0.1454
+        }
+      }
+    },
+    "blocked-page-recovery": {
+      "name": "blocked-page-recovery",
+      "description": "Use when a fetch fails: 403/429, paywall, WAF, bot wall.",
+      "neighbors": {}
+    },
+    "github": {
+      "name": "github",
+      "description": "GitHub via gh CLI: PRs, issues, reviews, repos, auth.",
+      "neighbors": {
+        "arxiv": {
+          "co-occurrence": 1
+        },
+        "box": {
+          "co-occurrence": 1
+        },
+        "feedback-loop": {
+          "co-occurrence": 1
+        },
+        "gif-search": {
+          "co-occurrence": 1
+        },
+        "obsidian": {
+          "co-occurrence": 1
+        },
+        "pdf": {
+          "co-occurrence": 1,
+          "sequence": 1
+        },
+        "powerpoint": {
+          "co-occurrence": 1
+        },
+        "xlsx": {
+          "co-occurrence": 1
+        },
+        "claude-code": {
+          "similarity": 0.1074
+        },
+        "codex": {
+          "similarity": 0.1127
+        }
+      }
+    },
+    "inspecting-hermes-desktop-dom": {
+      "name": "inspecting-hermes-desktop-dom",
+      "description": "Read the live Hermes desktop DOM/CSS over CDP.",
+      "neighbors": {
+        "hermes-agent-skill-authoring": {
+          "similarity": 0.1072
+        },
+        "hermes-agent": {
+          "similarity": 0.225
+        },
+        "computer-use": {
+          "similarity": 0.1958
+        }
+      }
+    },
+    "nvme-local-storage": {
+      "name": "nvme-local-storage",
+      "description": "Optimize standard NVMe SSDs on Linux.",
+      "neighbors": {}
+    },
+    "dogfood": {
+      "name": "dogfood",
+      "description": "Exploratory QA of web apps: find bugs, evidence, reports.",
+      "neighbors": {}
+    },
+    "systematic-debugging": {
+      "name": "systematic-debugging",
+      "description": "4-phase root cause debugging: understand bugs before fixing.",
+      "neighbors": {}
+    },
+    "spike": {
+      "name": "spike",
+      "description": "Throwaway experiments to validate an idea before build.",
+      "neighbors": {}
+    },
+    "hermes-agent-skill-authoring": {
+      "name": "hermes-agent-skill-authoring",
+      "description": "Author in-repo SKILL.md files: frontmatter and structure.",
+      "neighbors": {
+        "cross-skill-learning": {
+          "similarity": 0.1789
+        },
+        "design-md": {
+          "similarity": 0.2276
+        },
+        "inspecting-hermes-desktop-dom": {
+          "similarity": 0.1072
+        },
+        "agents-md-init": {
+          "similarity": 0.1535
+        },
+        "grounded-citations": {
+          "similarity": 0.1018
+        },
+        "atsm-skill-optimizer": {
+          "similarity": 0.1511
+        },
+        "hermes-agent": {
+          "similarity": 0.2698
+        }
+      }
+    },
+    "agents-md-init": {
+      "name": "agents-md-init",
+      "description": "Generate AGENTS.md project-instructions files via /init.",
+      "neighbors": {
+        "design-md": {
+          "similarity": 0.2509
+        },
+        "hermes-agent-skill-authoring": {
+          "similarity": 0.1535
+        }
+      }
+    },
+    "structured-decision-model": {
+      "name": "structured-decision-model",
+      "description": "Use specialized models for routing/classification.",
+      "neighbors": {
+        "gguf": {
+          "similarity": 0.106
+        }
+      }
+    },
+    "codebase-inspection": {
+      "name": "codebase-inspection",
+      "description": "Inspect codebases w/ pygount: LOC, languages, ratios.",
+      "neighbors": {
+        "node-inspect-debugger": {
+          "similarity": 0.1513
+        }
+      }
+    },
+    "python-debugpy": {
+      "name": "python-debugpy",
+      "description": "Debug Python: pdb REPL + debugpy remote (DAP).",
+      "neighbors": {
+        "powerpoint": {
+          "similarity": 0.1391
+        },
+        "google-workspace": {
+          "similarity": 0.1345
+        }
+      }
+    },
+    "node-inspect-debugger": {
+      "name": "node-inspect-debugger",
+      "description": "Debug Node.js via --inspect + Chrome DevTools Protocol CLI.",
+      "neighbors": {
+        "codebase-inspection": {
+          "similarity": 0.1513
+        }
+      }
+    },
+    "test-driven-development": {
+      "name": "test-driven-development",
+      "description": "TDD: enforce RED-GREEN-REFACTOR, tests before code.",
+      "neighbors": {
+        "simplify-code": {
+          "similarity": 0.1268
+        },
+        "claude-code": {
+          "similarity": 0.1287
+        }
+      }
+    },
+    "requesting-code-review": {
+      "name": "requesting-code-review",
+      "description": "Pre-commit review: security scan, quality gates, auto-fix.",
+      "neighbors": {
+        "sdlc-review": {
+          "similarity": 0.2277
+        },
+        "simplify-code": {
+          "similarity": 0.1181
+        },
+        "docx": {
+          "similarity": 0.1114
+        },
+        "opencode": {
+          "similarity": 0.1144
+        },
+        "claude-code": {
+          "similarity": 0.1198
+        }
+      }
+    },
+    "simplify-code": {
+      "name": "simplify-code",
+      "description": "Parallel 4-agent cleanup of recent code changes.",
+      "neighbors": {
+        "test-driven-development": {
+          "similarity": 0.1268
+        },
+        "requesting-code-review": {
+          "similarity": 0.1181
+        },
+        "hermes-agent": {
+          "similarity": 0.1159
+        },
+        "claude-code": {
+          "similarity": 0.2647
+        }
+      }
+    },
+    "xurl": {
+      "name": "xurl",
+      "description": "X/Twitter via xurl CLI: raw post search, posting, DM, media.",
+      "neighbors": {
+        "apple-notes": {
+          "similarity": 0.1081
+        },
+        "gif-search": {
+          "similarity": 0.1325
+        }
+      }
+    },
+    "obsidian": {
+      "name": "obsidian",
+      "description": "Read, search, create, and edit notes in the Obsidian vault.",
+      "neighbors": {
+        "arxiv": {
+          "co-occurrence": 2
+        },
+        "box": {
+          "co-occurrence": 2
+        },
+        "gif-search": {
+          "co-occurrence": 2,
+          "sequence": 2,
+          "similarity": 0.1154
+        },
+        "feedback-loop": {
+          "co-occurrence": 1
+        },
+        "github": {
+          "co-occurrence": 1
+        },
+        "pdf": {
+          "co-occurrence": 1,
+          "similarity": 0.1628
+        },
+        "powerpoint": {
+          "co-occurrence": 1,
+          "similarity": 0.1698
+        },
+        "xlsx": {
+          "co-occurrence": 1,
+          "similarity": 0.2018
+        },
+        "apple-notes": {
+          "similarity": 0.3104
+        },
+        "grounded-citations": {
+          "similarity": 0.1104
+        },
+        "docx": {
+          "similarity": 0.2007
+        }
+      }
+    },
+    "gguf": {
+      "name": "gguf",
+      "description": "Work with GGUF models locally.",
+      "neighbors": {
+        "structured-decision-model": {
+          "similarity": 0.106
+        },
+        "powerpoint": {
+          "similarity": 0.1004
+        }
+      }
+    },
+    "llm-wiki": {
+      "name": "llm-wiki",
+      "description": "Karpathy's LLM Wiki: build/query interlinked markdown KB.",
+      "neighbors": {}
+    },
+    "competitor-news-monitor": {
+      "name": "competitor-news-monitor",
+      "description": "Watch named companies for material news; cited digests.",
+      "neighbors": {
+        "product-price-monitor": {
+          "similarity": 0.133
+        }
+      }
+    },
+    "grounded-citations": {
+      "name": "grounded-citations",
+      "description": "Ground answers and documents in cited, verifiable sources.",
+      "neighbors": {
+        "hermes-agent-skill-authoring": {
+          "similarity": 0.1018
+        },
+        "obsidian": {
+          "similarity": 0.1104
+        },
+        "document-to-action-items": {
+          "similarity": 0.1668
+        }
+      }
+    },
+    "arxiv": {
+      "name": "arxiv",
+      "description": "Search arXiv papers by keyword, author, category, or ID.",
+      "neighbors": {
+        "box": {
+          "co-occurrence": 2,
+          "sequence": 1
+        },
+        "gif-search": {
+          "co-occurrence": 2,
+          "similarity": 0.1079
+        },
+        "obsidian": {
+          "co-occurrence": 2,
+          "sequence": 1
+        },
+        "feedback-loop": {
+          "co-occurrence": 1
+        },
+        "github": {
+          "co-occurrence": 1
+        },
+        "pdf": {
+          "co-occurrence": 1
+        },
+        "powerpoint": {
+          "co-occurrence": 1
+        },
+        "xlsx": {
+          "co-occurrence": 1
+        }
+      }
+    },
+    "huggingface-inference": {
+      "name": "huggingface-inference",
+      "description": "Stream chat via Hugging Face Inference Providers API.",
+      "neighbors": {}
+    },
+    "email-inbox-triage": {
+      "name": "email-inbox-triage",
+      "description": "Triage an inbox: prioritize threads, draft replies safely.",
+      "neighbors": {}
+    },
+    "himalaya": {
+      "name": "himalaya",
+      "description": "Himalaya CLI: IMAP/SMTP email from terminal.",
+      "neighbors": {}
+    },
+    "box": {
+      "name": "box",
+      "description": "Box manages cloud files, sharing, search, and metadata.",
+      "neighbors": {
+        "arxiv": {
+          "co-occurrence": 2
+        },
+        "gif-search": {
+          "co-occurrence": 2,
+          "similarity": 0.1172
+        },
+        "obsidian": {
+          "co-occurrence": 2,
+          "sequence": 1
+        },
+        "feedback-loop": {
+          "co-occurrence": 1,
+          "sequence": 1
+        },
+        "github": {
+          "co-occurrence": 1
+        },
+        "pdf": {
+          "co-occurrence": 1
+        },
+        "powerpoint": {
+          "co-occurrence": 1
+        },
+        "xlsx": {
+          "co-occurrence": 1
+        }
+      }
+    },
+    "atsm-skill-optimizer": {
+      "name": "atsm-skill-optimizer",
+      "description": "ATSM: rank skills by relevance and success history.",
+      "neighbors": {
+        "cross-skill-learning": {
+          "similarity": 0.1679
+        },
+        "hermes-agent-skill-authoring": {
+          "similarity": 0.1511
+        }
+      }
+    },
+    "product-price-monitor": {
+      "name": "product-price-monitor",
+      "description": "Watch product, flight, or listing prices; alert on target.",
+      "neighbors": {
+        "competitor-news-monitor": {
+          "similarity": 0.133
+        }
+      }
+    },
+    "teams-meeting-pipeline": {
+      "name": "teams-meeting-pipeline",
+      "description": "Teams meeting summaries, job replay, Graph subscriptions.",
+      "neighbors": {
+        "meeting-action-items": {
+          "similarity": 0.2719
+        }
+      }
+    },
+    "notion": {
+      "name": "notion",
+      "description": "Notion API + ntn CLI: pages, databases, markdown, Workers.",
+      "neighbors": {}
+    },
+    "powerpoint": {
+      "name": "powerpoint",
+      "description": "Create, read, edit .pptx decks with python-pptx.",
+      "neighbors": {
+        "arxiv": {
+          "co-occurrence": 1,
+          "sequence": 1
+        },
+        "box": {
+          "co-occurrence": 1
+        },
+        "feedback-loop": {
+          "co-occurrence": 1
+        },
+        "gif-search": {
+          "co-occurrence": 1
+        },
+        "github": {
+          "co-occurrence": 1
+        },
+        "obsidian": {
+          "co-occurrence": 1,
+          "similarity": 0.1698
+        },
+        "pdf": {
+          "co-occurrence": 1,
+          "similarity": 0.1656
+        },
+        "xlsx": {
+          "co-occurrence": 1,
+          "similarity": 0.1755
+        },
+        "apple-notes": {
+          "similarity": 0.1101
+        },
+        "python-debugpy": {
+          "similarity": 0.1391
+        },
+        "gguf": {
+          "similarity": 0.1004
+        },
+        "docx": {
+          "similarity": 0.1745
+        }
+      }
+    },
+    "google-workspace": {
+      "name": "google-workspace",
+      "description": "Gmail, Calendar, Drive, Docs, Sheets via gws CLI or Python.",
+      "neighbors": {
+        "python-debugpy": {
+          "similarity": 0.1345
+        }
+      }
+    },
+    "maps": {
+      "name": "maps",
+      "description": "Geocode, POIs, routes, timezones via OpenStreetMap/OSRM.",
+      "neighbors": {}
+    },
+    "weekly-review-planning": {
+      "name": "weekly-review-planning",
+      "description": "Weekly reset: commitments, stalled work, next-week plan.",
+      "neighbors": {
+        "sdlc-review": {
+          "similarity": 0.1117
+        }
+      }
+    },
+    "airtable": {
+      "name": "airtable",
+      "description": "Airtable REST API via curl. Records CRUD, filters, upserts.",
+      "neighbors": {
+        "gif-search": {
+          "similarity": 0.1168
+        }
+      }
+    },
+    "xlsx": {
+      "name": "xlsx",
+      "description": "Create, read, edit Excel .xlsx workbooks and CSVs.",
+      "neighbors": {
+        "arxiv": {
+          "co-occurrence": 1
+        },
+        "box": {
+          "co-occurrence": 1
+        },
+        "feedback-loop": {
+          "co-occurrence": 1
+        },
+        "gif-search": {
+          "co-occurrence": 1
+        },
+        "github": {
+          "co-occurrence": 1
+        },
+        "obsidian": {
+          "co-occurrence": 1,
+          "similarity": 0.2018
+        },
+        "pdf": {
+          "co-occurrence": 1,
+          "similarity": 0.1682
+        },
+        "powerpoint": {
+          "co-occurrence": 1,
+          "sequence": 1,
+          "similarity": 0.1755
+        },
+        "apple-notes": {
+          "similarity": 0.1119
+        },
+        "docx": {
+          "similarity": 0.2074
+        }
+      }
+    },
+    "meeting-action-items": {
+      "name": "meeting-action-items",
+      "description": "Turn meeting notes into cited decisions, owners, tickets.",
+      "neighbors": {
+        "apple-notes": {
+          "similarity": 0.1351
+        },
+        "teams-meeting-pipeline": {
+          "similarity": 0.2719
+        },
+        "document-to-action-items": {
+          "similarity": 0.2255
+        }
+      }
+    },
+    "docx": {
+      "name": "docx",
+      "description": "Create, read, edit, template, and review Word .docx files.",
+      "neighbors": {
+        "sdlc-review": {
+          "similarity": 0.1621
+        },
+        "apple-notes": {
+          "similarity": 0.1112
+        },
+        "requesting-code-review": {
+          "similarity": 0.1114
+        },
+        "obsidian": {
+          "similarity": 0.2007
+        },
+        "powerpoint": {
+          "similarity": 0.1745
+        },
+        "xlsx": {
+          "similarity": 0.2074
+        },
+        "pdf": {
+          "similarity": 0.223
+        }
+      }
+    },
+    "pdf": {
+      "name": "pdf",
+      "description": "PDF files: create, read, merge, fill, OCR, edit text.",
+      "neighbors": {
+        "arxiv": {
+          "co-occurrence": 1
+        },
+        "box": {
+          "co-occurrence": 1
+        },
+        "feedback-loop": {
+          "co-occurrence": 1
+        },
+        "gif-search": {
+          "co-occurrence": 1
+        },
+        "github": {
+          "co-occurrence": 1
+        },
+        "obsidian": {
+          "co-occurrence": 1,
+          "similarity": 0.1628
+        },
+        "powerpoint": {
+          "co-occurrence": 1,
+          "similarity": 0.1656
+        },
+        "xlsx": {
+          "co-occurrence": 1,
+          "sequence": 1,
+          "similarity": 0.1682
+        },
+        "apple-notes": {
+          "similarity": 0.1056
+        },
+        "docx": {
+          "similarity": 0.223
+        }
+      }
+    },
+    "document-to-action-items": {
+      "name": "document-to-action-items",
+      "description": "Extract cited obligations, deadlines, tasks from documents.",
+      "neighbors": {
+        "grounded-citations": {
+          "similarity": 0.1668
+        },
+        "meeting-action-items": {
+          "similarity": 0.2255
+        }
+      }
+    },
+    "gif-search": {
+      "name": "gif-search",
+      "description": "Search/download GIFs from Tenor via curl + jq.",
+      "neighbors": {
+        "arxiv": {
+          "co-occurrence": 2,
+          "similarity": 0.1079
+        },
+        "box": {
+          "co-occurrence": 2,
+          "sequence": 1,
+          "similarity": 0.1172
+        },
+        "obsidian": {
+          "co-occurrence": 2,
+          "similarity": 0.1154
+        },
+        "feedback-loop": {
+          "co-occurrence": 1
+        },
+        "github": {
+          "co-occurrence": 1,
+          "sequence": 1
+        },
+        "pdf": {
+          "co-occurrence": 1
+        },
+        "powerpoint": {
+          "co-occurrence": 1
+        },
+        "xlsx": {
+          "co-occurrence": 1
+        },
+        "apple-notes": {
+          "similarity": 0.1454
+        },
+        "xurl": {
+          "similarity": 0.1325
+        },
+        "airtable": {
+          "similarity": 0.1168
+        }
+      }
+    },
+    "songsee": {
+      "name": "songsee",
+      "description": "Audio spectrograms/features (mel, chroma, MFCC) via CLI.",
+      "neighbors": {
+        "opencode": {
+          "similarity": 0.1267
+        },
+        "claude-code": {
+          "similarity": 0.1198
+        },
+        "codex": {
+          "similarity": 0.1257
+        }
+      }
+    },
+    "youtube-content": {
+      "name": "youtube-content",
+      "description": "YouTube transcripts to summaries, threads, blogs.",
+      "neighbors": {}
+    },
+    "opencode": {
+      "name": "opencode",
+      "description": "Delegate coding to OpenCode CLI (features, PR review).",
+      "neighbors": {
+        "sdlc-review": {
+          "similarity": 0.1351
+        },
+        "requesting-code-review": {
+          "similarity": 0.1144
+        },
+        "songsee": {
+          "similarity": 0.1267
+        },
+        "claude-code": {
+          "similarity": 0.3238
+        },
+        "codex": {
+          "similarity": 0.3398
+        }
+      }
+    },
+    "hermes-agent": {
+      "name": "hermes-agent",
+      "description": "Use, configure, theme, extend, and orchestrate Hermes Agent.",
+      "neighbors": {
+        "agent-self-learning": {
+          "similarity": 0.163
+        },
+        "self-modification": {
+          "similarity": 0.1355
+        },
+        "inspecting-hermes-desktop-dom": {
+          "similarity": 0.225
+        },
+        "hermes-agent-skill-authoring": {
+          "similarity": 0.2698
+        },
+        "simplify-code": {
+          "similarity": 0.1159
+        }
+      }
+    },
+    "claude-code": {
+      "name": "claude-code",
+      "description": "Delegate coding to Claude Code CLI (features, PRs).",
+      "neighbors": {
+        "claude-design": {
+          "similarity": 0.1668
+        },
+        "github": {
+          "similarity": 0.1074
+        },
+        "test-driven-development": {
+          "similarity": 0.1287
+        },
+        "requesting-code-review": {
+          "similarity": 0.1198
+        },
+        "simplify-code": {
+          "similarity": 0.2647
+        },
+        "songsee": {
+          "similarity": 0.1198
+        },
+        "opencode": {
+          "similarity": 0.3238
+        },
+        "codex": {
+          "similarity": 0.4006
+        }
+      }
+    },
+    "codex": {
+      "name": "codex",
+      "description": "Delegate coding to OpenAI Codex CLI (features, PRs).",
+      "neighbors": {
+        "github": {
+          "similarity": 0.1127
+        },
+        "songsee": {
+          "similarity": 0.1257
+        },
+        "opencode": {
+          "similarity": 0.3398
+        },
+        "claude-code": {
+          "similarity": 0.4006
+        }
+      }
+    },
+    "computer-use": {
+      "name": "computer-use",
+      "description": "Drive the desktop background-first; escalate on signal.",
+      "neighbors": {
+        "imessage": {
+          "similarity": 0.1389
+        },
+        "inspecting-hermes-desktop-dom": {
+          "similarity": 0.1958
+        }
+      }
+    }
+  }
+}
