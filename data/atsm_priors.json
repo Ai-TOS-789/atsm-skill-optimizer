@@ -1,59 +1,431 @@
 {
   "_meta": {
-    "updated_at": "2026-09-21T00:08:13.689042+00:00",
+    "updated_at": "2026-09-21T03:36:48.682224+00:00",
     "decay_lambda": 0.01,
     "prior_alpha": 1.0,
     "prior_beta": 1.0,
     "total_records": 41,
-    "skills_tracked": 8
+    "skills_tracked": 69
   },
   "_global": {
     "alpha": 1.0,
     "beta": 1.0
   },
   "arxiv": {
-    "alpha": 7.839,
+    "alpha": 1.0,
     "beta": 1.0,
-    "expected_success": 0.8869,
-    "observations": 7
+    "expected_success": 0.5,
+    "observations": 0
   },
   "box": {
-    "alpha": 3.7036,
-    "beta": 4.9299,
-    "expected_success": 0.429,
-    "observations": 7
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
   },
   "gif-search": {
     "alpha": 1.0,
-    "beta": 5.8862,
-    "expected_success": 0.1452,
-    "observations": 5
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
   },
   "github": {
     "alpha": 1.0,
-    "beta": 6.927,
-    "expected_success": 0.1262,
-    "observations": 6
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
   },
   "obsidian": {
-    "alpha": 3.9018,
-    "beta": 1.9995,
-    "expected_success": 0.6612,
-    "observations": 4
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
   },
   "pdf": {
-    "alpha": 3.983,
-    "beta": 3.9476,
-    "expected_success": 0.5022,
-    "observations": 6
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
   },
   "xurl": {
     "alpha": 1.0,
-    "beta": 6.9272,
-    "expected_success": 0.1261,
-    "observations": 6
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
   },
   "embed_rank": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "agent-self-learning": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "agents-md-init": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "airtable": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "apple-notes": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "apple-reminders": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "architecture-diagram": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "ascii-video": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "atsm-skill-optimizer": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "baoyu-infographic": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "blocked-page-recovery": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "claude-code": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "claude-design": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "codebase-inspection": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "codex": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "competitor-news-monitor": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "computer-use": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "cross-skill-learning": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "design-md": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "document-to-action-items": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "docx": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "dogfood": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "email-inbox-triage": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "feedback-loop": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "findmy": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "gguf": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "google-workspace": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "grounded-citations": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "hermes-agent": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "hermes-agent-skill-authoring": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "himalaya": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "huggingface-inference": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "humanizer": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "imessage": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "inspecting-hermes-desktop-dom": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "llm-wiki": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "manim-video": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "maps": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "meeting-action-items": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "node-inspect-debugger": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "notion": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "nvme-local-storage": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "opencode": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "p5js": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "pattern-library": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "popular-web-designs": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "powerpoint": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "product-price-monitor": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "python-debugpy": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "requesting-code-review": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "sdlc-review": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "self-modification": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "simplify-code": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "songsee": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "songwriting-and-ai-music": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "spike": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "structured-decision-model": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "systematic-debugging": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "teams-meeting-pipeline": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "test-driven-development": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "weekly-review-planning": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "xlsx": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "expected_success": 0.5,
+    "observations": 0
+  },
+  "youtube-content": {
     "alpha": 1.0,
     "beta": 1.0,
     "expected_success": 0.5,

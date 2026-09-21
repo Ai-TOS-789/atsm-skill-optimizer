@@ -1,0 +1,350 @@
+{
+  "skills": {
+    "agent-self-learning": {
+      "hash": "20c96d73d5bf5e54cdfdf8cedf96a07d",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575649+00:00"
+    },
+    "agents-md-init": {
+      "hash": "bc601667a67acdd27a4acbc235811c2c",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575655+00:00"
+    },
+    "airtable": {
+      "hash": "d9c1d93c355b5b4a9ca47c6d369f788f",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575657+00:00"
+    },
+    "apple-notes": {
+      "hash": "1863e6ebfdb4973b54dc6dc9ec007575",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575658+00:00"
+    },
+    "apple-reminders": {
+      "hash": "c33867c943d5af7ab45f72ddeb5405e4",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575659+00:00"
+    },
+    "architecture-diagram": {
+      "hash": "bb3ba92d1f5c62c8ee5f48940b738a9f",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575660+00:00"
+    },
+    "arxiv": {
+      "hash": "48a38680f82143bff9556ecb31ed4afa",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575661+00:00"
+    },
+    "ascii-video": {
+      "hash": "3c371821c58eed1eec93442ff2f19c36",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575662+00:00"
+    },
+    "atsm-skill-optimizer": {
+      "hash": "c16265bc0202d372e993c68740c79994",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575663+00:00"
+    },
+    "baoyu-infographic": {
+      "hash": "380e0da4fce12fabd7dc15e019221043",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575664+00:00"
+    },
+    "blocked-page-recovery": {
+      "hash": "c9846d7e1fdd03ec2db40508a5772e62",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575665+00:00"
+    },
+    "box": {
+      "hash": "c1ae7c15b45732b5d3b51742ead7112c",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575666+00:00"
+    },
+    "claude-code": {
+      "hash": "c3bf876ccdaade01546bde5df3e17ae2",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575667+00:00"
+    },
+    "claude-design": {
+      "hash": "7e656944c7f6d1b231124e5f5df7f71a",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575668+00:00"
+    },
+    "codebase-inspection": {
+      "hash": "16dc4fecd98f6cd96194834538f84bf4",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575669+00:00"
+    },
+    "codex": {
+      "hash": "b5aa273d970676de9bfe5cc24458a5e4",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575670+00:00"
+    },
+    "competitor-news-monitor": {
+      "hash": "ed782656b4692eebf9ad1d83e15109e3",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575671+00:00"
+    },
+    "computer-use": {
+      "hash": "3a1b5d87c0542a59ba7b1ba8036fa2b6",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575672+00:00"
+    },
+    "cross-skill-learning": {
+      "hash": "971c220e2073166b55614db02d177553",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575673+00:00"
+    },
+    "design-md": {
+      "hash": "2f7054c63cb58e73336c858ceb34803b",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575674+00:00"
+    },
+    "document-to-action-items": {
+      "hash": "17c0200975cae893b7cfa4dba23a2e08",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575674+00:00"
+    },
+    "docx": {
+      "hash": "e5e126cc0e98911354f308a24838bd28",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575675+00:00"
+    },
+    "dogfood": {
+      "hash": "f41a8438b66850251ee359d25dba7cc7",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575676+00:00"
+    },
+    "email-inbox-triage": {
+      "hash": "5f4bb462043479c5fa6163b8486506b8",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575677+00:00"
+    },
+    "feedback-loop": {
+      "hash": "3ea91a6af7bf99d06e359a5c4ab99208",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575678+00:00"
+    },
+    "findmy": {
+      "hash": "f3c6b9fa050f3dea20cdf1272439fd50",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575679+00:00"
+    },
+    "gguf": {
+      "hash": "a25a16a0f289ad0fc51f5fe88751c812",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575680+00:00"
+    },
+    "gif-search": {
+      "hash": "dd129d19475cacd626d44ebe1c650747",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575681+00:00"
+    },
+    "github": {
+      "hash": "fa680674fce5e5894c1abe087db6f808",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575681+00:00"
+    },
+    "google-workspace": {
+      "hash": "9aace6c69dca7dd1b33de29a5443ad08",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575683+00:00"
+    },
+    "grounded-citations": {
+      "hash": "3a15c8d2e358f9214cd3921420143778",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575683+00:00"
+    },
+    "hermes-agent": {
+      "hash": "e2056b266354683589b29a54e238f8e3",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575684+00:00"
+    },
+    "hermes-agent-skill-authoring": {
+      "hash": "cfea00a0119fad0c9f6c58ae40700e81",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575685+00:00"
+    },
+    "himalaya": {
+      "hash": "5dbf35dc58f798dd1a1ad76af57eee29",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575686+00:00"
+    },
+    "huggingface-inference": {
+      "hash": "3d87bb6246575476e983864340e2d15e",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575687+00:00"
+    },
+    "humanizer": {
+      "hash": "80085ab0bf3deb9a8cfb04e048628ce9",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575688+00:00"
+    },
+    "imessage": {
+      "hash": "bf7ff4872b867e4358e0698d71b0c6d2",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575689+00:00"
+    },
+    "inspecting-hermes-desktop-dom": {
+      "hash": "db18d6b844925326a0f00870a6e8163a",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575690+00:00"
+    },
+    "llm-wiki": {
+      "hash": "301f902fa117e7870aed9c458968140b",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575691+00:00"
+    },
+    "manim-video": {
+      "hash": "3f7d0e95fb340a7f75329f2dbce8a417",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575692+00:00"
+    },
+    "maps": {
+      "hash": "d2051344dbb1db5ff4809622f0f11448",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575693+00:00"
+    },
+    "meeting-action-items": {
+      "hash": "4d94bf8a4aff8f6ccfe4d0c161995fcf",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575693+00:00"
+    },
+    "node-inspect-debugger": {
+      "hash": "375230a64c703ad704db26efcaf27b8e",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575694+00:00"
+    },
+    "notion": {
+      "hash": "3eac2d8b0a90e101a18827d268806b0b",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575695+00:00"
+    },
+    "nvme-local-storage": {
+      "hash": "a1a999a0cebb4e0c897571167593cf53",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575696+00:00"
+    },
+    "obsidian": {
+      "hash": "d69357689779e93bba1692076be331e9",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575697+00:00"
+    },
+    "opencode": {
+      "hash": "35f28a3c481641e85e8814934ad6e3bd",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575698+00:00"
+    },
+    "p5js": {
+      "hash": "18e1a1c5f01a19ca1bd313f7b8c15bad",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575699+00:00"
+    },
+    "pattern-library": {
+      "hash": "6bbfc4f90c1da0c63e6db9041cf1d81b",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575700+00:00"
+    },
+    "pdf": {
+      "hash": "6f3a56b238f2e45778b4673b37216a2b",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575701+00:00"
+    },
+    "popular-web-designs": {
+      "hash": "6f2b79a9d8a24692e9e2d96ff8b71c57",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575701+00:00"
+    },
+    "powerpoint": {
+      "hash": "8e9a19f6e9a574ef7e972fcf3745458f",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575702+00:00"
+    },
+    "product-price-monitor": {
+      "hash": "af7f6f7f01669b39a25585f77c07f3e2",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575703+00:00"
+    },
+    "python-debugpy": {
+      "hash": "23fda42a7997f99865808c94752e9e8a",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575704+00:00"
+    },
+    "requesting-code-review": {
+      "hash": "1521528744e686cb4a3e6084897b8b00",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575705+00:00"
+    },
+    "sdlc-review": {
+      "hash": "fe8d3248e0985fa2edbca6a39074f107",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575706+00:00"
+    },
+    "self-modification": {
+      "hash": "be90e1ff311b641e4eb6b4939d8aab93",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575706+00:00"
+    },
+    "simplify-code": {
+      "hash": "90140d9d060b64da42e364c2a34ee5f4",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575707+00:00"
+    },
+    "songsee": {
+      "hash": "9dac3fe9b3b04b6e9cd89f41794fc6d6",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575708+00:00"
+    },
+    "songwriting-and-ai-music": {
+      "hash": "dc730a3e601e28b165e9b35617a1b501",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575709+00:00"
+    },
+    "spike": {
+      "hash": "59f679d4e57b8e8531132b510c954a01",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575710+00:00"
+    },
+    "structured-decision-model": {
+      "hash": "9a957d1ccbaf0a5591cc2216b8e17942",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575711+00:00"
+    },
+    "systematic-debugging": {
+      "hash": "fe751251451d4984fb19fcc82fa107a2",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575712+00:00"
+    },
+    "teams-meeting-pipeline": {
+      "hash": "2dddd870315810bcb10ef1a871a73f66",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575713+00:00"
+    },
+    "test-driven-development": {
+      "hash": "9450f45a0ebb632148c196bcd7d729b6",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575714+00:00"
+    },
+    "weekly-review-planning": {
+      "hash": "6eeee5c40af809559cb07aa0dc21c965",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575715+00:00"
+    },
+    "xlsx": {
+      "hash": "4caa2686cac31e22db5371541b6fcdd8",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575716+00:00"
+    },
+    "xurl": {
+      "hash": "2f695cae41be8132b3f52518e4eaa4b4",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575717+00:00"
+    },
+    "youtube-content": {
+      "hash": "ae3adcf4db4d796fd9fc864227f49b68",
+      "status": "synced",
+      "added_at": "2026-09-21T03:34:37.575718+00:00"
+    }
+  },
+  "last_sync": "2026-09-21T03:36:48.682219+00:00"
+}
