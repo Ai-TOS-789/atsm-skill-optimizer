@@ -2,7 +2,8 @@
 """ATSM Gateway — REST API server for the Adaptive Task-Skill Matching engine.
 
 Exposes HTTP endpoints for ranking skills, recording outcomes, viewing stats,
-and planning skill chains. Runs a background proactive agent every 5 minutes.
+planning skill chains, serving the dashboard UI, and proxying ATSM module CLIs.
+Runs a background proactive agent every 5 minutes.
 
 CLI:
     python3 atsm_gateway.py start    # start server (foreground)
@@ -17,9 +18,14 @@ API Endpoints:
     GET  /api/lessons
     POST /api/chain    {"command": "..."}
     GET  /api/status
+    GET  /ui            → serves the ATSM dashboard HTML
+    GET  /api/dashboard → returns dashboard data as JSON
+    GET  /api/flow      → returns visual flow DOT
+    POST /api/proxy     {"module": "...", "args": [...]} → forwards to any ATSM module CLI
 """
 
 import json
+import mimetypes
 import os
 import signal
 import subprocess
@@ -29,11 +35,12 @@ import time
 from datetime import datetime, timezone
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 # --- Paths ---
 SKILL_DIR = Path(__file__).parent
 DATA_DIR = SKILL_DIR.parent / "data"
+UI_DIR = SKILL_DIR.parent / "ui"
 DB_FILE = DATA_DIR / "atsm_db.jsonl"
 CHAINS_FILE = DATA_DIR / "chains_db.jsonl"
 PROACTIVE_AGENT = SKILL_DIR / "proactive_agent.py"
@@ -115,6 +122,18 @@ class ATSMHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_text(self, text: str, content_type: str = "text/plain; charset=utf-8", status: int = 200):
+        """Send text response with CORS headers."""
+        body = text.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+        self.wfile.write(body)
+
     def _read_body(self) -> dict:
         """Read and parse JSON request body."""
         content_length = int(self.headers.get("Content-Length", 0))
@@ -134,10 +153,168 @@ class ATSMHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
+    def _serve_static(self, file_path: Path):
+        """Serve a static file from the ui/ directory."""
+        if not file_path.exists() or not file_path.is_file():
+            self._send_json({"error": "Not found", "path": str(file_path)}, status=404)
+            return
+
+        # Security: prevent path traversal
+        try:
+            file_path.resolve().relative_to(UI_DIR.resolve())
+        except ValueError:
+            self._send_json({"error": "Forbidden"}, status=403)
+            return
+
+        content_type, _ = mimetypes.guess_type(str(file_path))
+        if content_type is None:
+            content_type = "application/octet-stream"
+
+        try:
+            content = file_path.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(content)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.end_headers()
+            self.wfile.write(content)
+        except Exception as e:
+            self._send_json({"error": f"Failed to read file: {e}"}, status=500)
+
+    def _generate_flow_dot(self) -> str:
+        """Generate a DOT graph of ATSM skill flow."""
+        records = atsm.load_db()
+        stats = atsm.compute_stats(records)
+        chains = skill_chain.load_chains()
+
+        # Build co-occurrence from chains
+        cooc = {}
+        for chain in chains:
+            steps = chain.get("steps", [])
+            for i in range(len(steps) - 1):
+                key = f"{steps[i]}|||{steps[i+1]}"
+                cooc[key] = cooc.get(key, 0) + 1
+
+        lines = ["digraph ATSM_Flow {", "  rankdir=LR;"]
+        lines.append('  node [shape=box, style=rounded, fontname="sans-serif"];')
+        lines.append('  edge [fontname="sans-serif", fontsize=10];')
+        lines.append("")
+
+        # Add skill nodes with success rate coloring
+        all_skills = set()
+        for name in stats:
+            all_skills.add(name)
+        for chain in chains:
+            for step in chain.get("steps", []):
+                all_skills.add(step)
+
+        for skill in sorted(all_skills):
+            s = stats.get(skill)
+            if s:
+                success_rate = s.get("expected_success", 0.5)
+                # Color from red (0) to green (1)
+                r = int(255 * (1 - success_rate))
+                g = int(255 * success_rate)
+                b = 100
+                label = f"{skill}\\nP={success_rate:.2f}"
+            else:
+                r, g, b = 180, 180, 180
+                label = skill
+            lines.append(f'  "{skill}" [label="{label}", fillcolor="rgb({r},{g},{b})", style="filled,rounded"];')
+
+        lines.append("")
+
+        # Add edges from co-occurrence
+        for key, weight in sorted(cooc.items(), key=lambda x: -x[1]):
+            parts = key.split("|||")
+            if len(parts) == 2:
+                src, dst = parts
+                penwidth = min(max(weight, 1), 5)
+                lines.append(f'  "{src}" -> "{dst}" [label={weight}, penwidth={penwidth}];')
+
+        lines.append("}")
+        return "\n".join(lines)
+
+    def _get_dashboard_data(self) -> dict:
+        """Return comprehensive dashboard data as JSON."""
+        records = atsm.load_db()
+        stats = atsm.compute_stats(records)
+        chains = skill_chain.load_chains()
+
+        # Build skill summary
+        skills_summary = []
+        for name, s in sorted(stats.items(), key=lambda x: x[1].get("expected_success", 0), reverse=True):
+            skills_summary.append({
+                "name": name,
+                "successes": s["raw_successes"],
+                "failures": s["raw_failures"],
+                "total": s["total"],
+                "expected_success": round(s["expected_success"], 4),
+                "confidence": round(s["confidence"], 4),
+                "effective_total": round(s["effective_total"], 2),
+            })
+
+        # Build co-occurrence from chains
+        cooc = {}
+        for chain in chains:
+            steps = chain.get("steps", [])
+            for i in range(len(steps) - 1):
+                key = f"{steps[i]}|||{steps[i+1]}"
+                cooc[key] = cooc.get(key, 0) + 1
+
+        # Flow data (nodes and edges)
+        nodes = [{"id": name, "expected_success": round(s.get("expected_success", 0.5), 4)} for name, s in stats.items()]
+        edges = []
+        for key, weight in cooc.items():
+            parts = key.split("|||")
+            if len(parts) == 2:
+                edges.append({"source": parts[0], "target": parts[1], "weight": weight})
+
+        # Recent log entries
+        recent_log = []
+        if LOG_FILE.exists():
+            try:
+                log_lines = LOG_FILE.read_text().strip().splitlines()
+                recent_log = log_lines[-20:]
+            except:
+                pass
+
+        return {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "total_records": len(records),
+            "total_skills_tracked": len(stats),
+            "total_chains_executed": len(chains),
+            "skills_summary": skills_summary,
+            "flow": {
+                "nodes": nodes,
+                "edges": edges,
+            },
+            "recent_log": recent_log,
+            "lessons": _get_lessons(),
+        }
+
     def do_GET(self):
         """Handle GET requests."""
         parsed = urlparse(self.path)
         path = parsed.path.rstrip("/")
+
+        if path == "/ui":
+            # Serve the ATSM dashboard HTML
+            html_file = UI_DIR / "atsm-visualizer.html"
+            if not html_file.exists():
+                self._send_json({"error": "Dashboard HTML not found", "path": str(html_file)}, status=404)
+                return
+            self._serve_static(html_file)
+            return
+
+        # Static file serving for ui/ directory
+        if path.startswith("/ui/"):
+            relative = path[len("/ui/"):]
+            file_path = UI_DIR / relative
+            self._serve_static(file_path)
+            return
 
         if path == "/api/health":
             self._send_json({
@@ -195,6 +372,16 @@ class ATSMHandler(BaseHTTPRequestHandler):
                 "average_confidence": round(avg_confidence, 4),
                 "proactive_interval_sec": PROACTIVE_INTERVAL,
             })
+
+        elif path == "/api/dashboard":
+            # Return comprehensive dashboard data as JSON
+            dashboard_data = self._get_dashboard_data()
+            self._send_json(dashboard_data)
+
+        elif path == "/api/flow":
+            # Return visual flow DOT
+            dot = self._generate_flow_dot()
+            self._send_text(dot, content_type="text/vnd.graphviz; charset=utf-8")
 
         else:
             self._send_json({"error": "Not found", "path": path}, status=404)
@@ -261,6 +448,57 @@ class ATSMHandler(BaseHTTPRequestHandler):
                     ],
                     "execution": execution,
                 })
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=500)
+
+        elif path == "/api/proxy":
+            # Forward request to any ATSM module CLI
+            module = body.get("module", "")
+            args = body.get("args", [])
+            if not module:
+                self._send_json({"error": "Missing 'module' field"}, status=400)
+                return
+
+            # Whitelist of allowed modules for security
+            allowed_modules = {
+                "atsm", "skill_chain", "proactive_agent", "embed_rank",
+                "self_heal", "goal_planner", "execution_engine",
+            }
+
+            if module not in allowed_modules:
+                self._send_json(
+                    {"error": f"Module '{module}' not allowed", "allowed": sorted(allowed_modules)},
+                    status=403,
+                )
+                return
+
+            script_path = SKILL_DIR / f"{module}.py"
+            if not script_path.exists():
+                self._send_json(
+                    {"error": f"Module script not found: {script_path}"}, status=404
+                )
+                return
+
+            # Sanitize args
+            clean_args = [str(a) for a in args]
+
+            try:
+                result = subprocess.run(
+                    [sys.executable, str(script_path)] + clean_args,
+                    capture_output=True, text=True, timeout=60
+                )
+                self._send_json({
+                    "module": module,
+                    "args": clean_args,
+                    "returncode": result.returncode,
+                    "stdout": result.stdout,
+                    "stderr": result.stderr,
+                })
+            except subprocess.TimeoutExpired:
+                self._send_json(
+                    {"error": "Module execution timed out (60s limit)"},
+                    status=504,
+                )
             except Exception as e:
                 self._send_json({"error": str(e)}, status=500)
 
@@ -349,13 +587,17 @@ def start_server():
     _server = HTTPServer(("0.0.0.0", PORT), ATSMHandler)
     log(f"ATSM Gateway listening on port {PORT}")
     print(f"ATSM Gateway running on http://localhost:{PORT}")
-    print(f"  Health:  GET  http://localhost:{PORT}/api/health")
-    print(f"  Rank:    POST http://localhost:{PORT}/api/rank")
-    print(f"  Record:  POST http://localhost:{PORT}/api/record")
-    print(f"  Stats:   GET  http://localhost:{PORT}/api/stats")
-    print(f"  Lessons: GET  http://localhost:{PORT}/api/lessons")
-    print(f"  Chain:   POST http://localhost:{PORT}/api/chain")
-    print(f"  Status:  GET  http://localhost:{PORT}/api/status")
+    print(f"  Health:    GET  http://localhost:{PORT}/api/health")
+    print(f"  Rank:      POST http://localhost:{PORT}/api/rank")
+    print(f"  Record:    POST http://localhost:{PORT}/api/record")
+    print(f"  Stats:     GET  http://localhost:{PORT}/api/stats")
+    print(f"  Lessons:   GET  http://localhost:{PORT}/api/lessons")
+    print(f"  Chain:     POST http://localhost:{PORT}/api/chain")
+    print(f"  Status:    GET  http://localhost:{PORT}/api/status")
+    print(f"  UI:        GET  http://localhost:{PORT}/ui")
+    print(f"  Dashboard: GET  http://localhost:{PORT}/api/dashboard")
+    print(f"  Flow:      GET  http://localhost:{PORT}/api/flow")
+    print(f"  Proxy:     POST http://localhost:{PORT}/api/proxy")
     try:
         _server.serve_forever()
     except KeyboardInterrupt:

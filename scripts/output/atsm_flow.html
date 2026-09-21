@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ATSM Flow Diagram (DOT Source)</title>
+    <style>
+        body { margin: 0; padding: 20px; background: #FAFAFA; font-family: Helvetica, Arial, sans-serif; }
+        h1 { text-align: center; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; }
+        pre { background: #263238; color: #AED581; padding: 20px; border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+        .info { background: #E3F2FD; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>ATSM: Adaptive Task-Skill Matching Flow</h1>
+    <div class="container">
+        <div class="info">
+            <strong>Graphviz not installed.</strong> Showing DOT source.
+            Install graphviz (<code>sudo apt-get install graphviz</code>) to render as SVG.
+        </div>
+        <pre>digraph ATSM_Flow {
+    rankdir=LR;
+    bgcolor="#FAFAFA";
+    label="ATSM: Adaptive Task-Skill Matching Flow";
+    labelloc=t;
+    fontsize=20;
+    fontname="Helvetica-Bold";
+    node [fontname="Helvetica", fontsize=11, style=filled, fillcolor=white, penwidth=2];
+    edge [fontname="Helvetica", fontsize=9, color="#666666"];
+
+    // --- Nodes ---
+    input [label="Task Description
+(Input)", fillcolor="#4CAF50", shape=box, fontcolor=white, style="filled,rounded"];
+    atsm_rank [label="ATSM Rank
+(Bayesian + TF-IDF)", fillcolor="#2196F3", shape=box, fontcolor=white, style="filled,rounded"];
+    embed_rank [label="Embed Rank
+(Semantic Similarity)", fillcolor="#2196F3", shape=box, fontcolor=white, style="filled,rounded"];
+    causal [label="Causal Inference
+(Granger Test)", fillcolor="#2196F3", shape=box, fontcolor=white, style="filled,rounded"];
+    goal_plan [label="Goal Planning
+(Decomposition)", fillcolor="#2196F3", shape=box, fontcolor=white, style="filled,rounded"];
+    skill_chain [label="Skill Chaining
+(Sequence)", fillcolor="#2196F3", shape=box, fontcolor=white, style="filled,rounded"];
+    execution [label="Execution
+(Hermes CLI)", fillcolor="#FF9800", shape=box, fontcolor=white, style="filled,rounded"];
+    verification [label="Verification
+(Check Result)", fillcolor="#9C27B0", shape=box, fontcolor=white, style="filled,rounded"];
+
+    // --- Edges ---
+    input -> atsm_rank [label="task text"];
+    input -> embed_rank [label="task text"];
+    input -> causal [label="historical data"];
+    atsm_rank -> goal_plan [label="ranked skills"];
+    embed_rank -> goal_plan [label="semantic scores"];
+    causal -> goal_plan [label="causal links"];
+    goal_plan -> skill_chain [label="subgoals"];
+    skill_chain -> execution [label="skill sequence"];
+    execution -> verification [label="result"];
+    verification -> atsm_rank [label="feedback (success/fail)"];
+    verification -> embed_rank [label="feedback (embedding update)"];
+
+    // --- Feedback Loop ---
+    feedback [label="Feedback
+Loop", shape=plaintext, fontcolor="#666666", fontsize=10];
+    feedback -> verification [style=invis];
+}</pre>
+    </div>
+</body>
+</html>

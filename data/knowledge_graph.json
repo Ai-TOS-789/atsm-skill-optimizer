@@ -1,10 +1,10 @@
 {
   "meta": {
-    "built_at": "2026-09-21T02:10:26.304087+00:00",
+    "built_at": "2026-09-21T04:43:05.143102+00:00",
     "num_skills": 69,
-    "num_records": 27,
-    "num_cooccurrence_edges": 36,
-    "num_sequence_edges": 11,
+    "num_records": 36,
+    "num_cooccurrence_edges": 37,
+    "num_sequence_edges": 12,
     "num_similarity_edges": 83,
     "num_causal_edges": 0
   },
@@ -13,6 +13,9 @@
       "name": "agent-self-learning",
       "description": "Capture experience, extract patterns, and improve skills.",
       "neighbors": {
+        "obsidian": {
+          "co-occurrence": 1
+        },
         "pattern-library": {
           "similarity": 0.2146
         },
@@ -552,6 +555,10 @@
           "co-occurrence": 1,
           "similarity": 0.2018
         },
+        "agent-self-learning": {
+          "co-occurrence": 1,
+          "sequence": 1
+        },
         "apple-notes": {
           "similarity": 0.3104
         },
@@ -618,7 +625,7 @@
         },
         "obsidian": {
           "co-occurrence": 2,
-          "sequence": 1
+          "sequence": 2
         },
         "feedback-loop": {
           "co-occurrence": 1

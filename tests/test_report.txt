@@ -1,0 +1,45 @@
+======================================================================
+ATSM TEST SUITE — REPORT
+======================================================================
+
+Total:  33
+Passed: 33
+Failed: 0
+Rate:   100.0%
+
+Module                    Test                                Status   Time      
+----------------------------------------------------------------------
+atsm                      test_atsm_rank                      PASS     18.4ms
+atsm                      test_atsm_record                    PASS     0.3ms
+embed_rank                test_embed_rank                     PASS     9829.7ms
+knowledge_graph           test_knowledge_graph                PASS     161.0ms
+causal_infer              test_causal_infer                   PASS     0.3ms
+goal_planner              test_goal_planner                   PASS     62.4ms
+swarm                     test_swarm                          PASS     9.3ms
+execution                 test_execution                      PASS     13.0ms
+bridge                    test_bridge                         PASS     33.5ms
+agent_alerts              test_auto_agent_alerts              PASS     0.1ms
+agent_chat                test_auto_agent_chat                PASS     0.8ms
+agent_coord               test_auto_agent_coord               PASS     0.2ms
+agent_memory              test_auto_agent_memory              PASS     0.1ms
+agent_spawner             test_auto_agent_spawner             PASS     0.2ms
+atsm_acp                  test_auto_atsm_acp                  PASS     0.1ms
+atsm_flow                 test_auto_atsm_flow                 PASS     0.3ms
+atsm_gateway              test_auto_atsm_gateway              PASS     0.8ms
+atsm_learn                test_auto_atsm_learn                PASS     0.2ms
+atsm_multimodal           test_auto_atsm_multimodal           PASS     0.1ms
+atsm_stream               test_auto_atsm_stream               PASS     0.2ms
+atsm_update               test_auto_atsm_update               PASS     0.1ms
+auto_skill                test_auto_auto_skill                PASS     0.1ms
+browser_bot               test_auto_browser_bot               PASS     5.1ms
+desktop_widget            test_auto_desktop_widget            PASS     0.2ms
+hermes_voice              test_auto_hermes_voice              PASS     0.1ms
+hermes_wake               test_auto_hermes_wake               PASS     0.4ms
+model_router              test_auto_model_router              PASS     0.3ms
+plugin_install            test_auto_plugin_install            PASS     0.1ms
+proactive_agent           test_auto_proactive_agent           PASS     0.2ms
+self_heal                 test_auto_self_heal                 PASS     0.1ms
+skill_chain               test_auto_skill_chain               PASS     0.1ms
+sys_monitor               test_auto_sys_monitor               PASS     0.1ms
+unified_control           test_auto_unified_control           PASS     0.2ms
+======================================================================

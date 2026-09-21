@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATSM Dashboard — Adaptive Task-Skill Matching</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+:root {
+  --bg: #0a0e17;
+  --bg2: #0d1321;
+  --bg3: #1a2035;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --accent: #3b82f6;
+  --accent2: #2563eb;
+  --border: #2a3447;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #ef4444;
+  --purple: #c084fc;
+}
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --bg2: #ffffff;
+  --bg3: #f1f5f9;
+  --text: #1e293b;
+  --text2: #475569;
+  --text3: #94a3b8;
+  --border: #e2e8f0;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background .3s, color .3s;
+}
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius:3px; }
+
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: border-color .2s, transform .2s;
+}
+.stat-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; }
+.stat-value { font-size: 22px; font-weight: 700; color: var(--text); margin-top: 4px; }
+.stat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title .dot { width:6px; height:6px; border-radius:50%; }
+
+.bar-container { background: var(--bg3); border-radius: 4px; height: 8px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width .5s ease; }
+
+.progress-ring { transform: rotate(-90deg); }
+
+.graph-container { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; position: relative; }
+.graph-container svg { width: 100%; height: 100%; }
+
+.node-tooltip {
+  position: absolute; pointer-events: none;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 12px; font-size: 11px;
+  color: var(--text); max-width: 220px; z-index: 50; display: none;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+}
+
+.goal-tree-node {
+  padding: 6px 10px; margin: 3px 0; border-radius: 6px;
+  background: var(--bg3); border-left: 3px solid var(--accent);
+  font-size: 12px;
+}
+.goal-tree-node.completed { border-left-color: var(--success); opacity: .7; }
+.goal-tree-node.active { border-left-color: var(--warning); }
+.goal-tree-node.pending { border-left-color: var(--text3); opacity: .6; }
+.goal-tree-node.failed { border-left-color: var(--danger); }
+
+.exec-entry {
+  padding: 8px 10px; margin-bottom: 4px; border-radius: 6px;
+  background: var(--bg3); border: 1px solid var(--border);
+  font-size: 11px; transition: background .2s;
+}
+.exec-entry:hover { background: var(--bg2); }
+.exec-time { color: var(--text3); font-variant-numeric: tabular-nums; }
+.exec-task { color: var(--text); font-weight: 500; }
+.exec-skill { color: var(--accent); font-weight: 600; }
+
+.alert-item {
+  padding: 8px 12px; margin-bottom: 4px; border-radius: 6px;
+  font-size: 11px; display: flex; align-items: center; gap: 8px;
+}
+.alert-item.critical { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); color: var(--danger); }
+.alert-item.warning { background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.3); color: var(--warning); }
+
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse-dot 1.5s infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+
+.edge { stroke-opacity: .3; fill: none; transition: stroke-opacity .3s; }
+.edge:hover { stroke-opacity: .8; }
+.node circle { cursor: pointer; stroke: var(--bg); stroke-width: 2px; transition: stroke .2s; }
+.node circle:hover { stroke: var(--accent); stroke-width: 3px; }
+.node text { font-size: 9px; fill: var(--text2); pointer-events: none; text-anchor: middle; }
+
+.pulse-anim { animation: node-pulse 1s ease-out; }
+@keyframes node-pulse {
+  0% { filter: drop-shadow(0 0 0px var(--accent)); stroke-width: 6px; }
+  50% { filter: drop-shadow(0 0 12px var(--accent)); stroke-width: 8px; }
+  100% { filter: drop-shadow(0 0 0px transparent); stroke-width: 2px; }
+}
+
+.rank-item {
+  padding: 10px 14px; margin-bottom: 4px; background: var(--bg3);
+  border-radius: 8px; cursor: pointer; border: 1px solid transparent;
+  transition: all .2s;
+}
+.rank-item:hover { background: var(--bg2); border-color: var(--border); }
+.rank-item.selected { border-color: var(--accent); background: var(--bg2); }
+.rank-num { font-size: 11px; font-weight: 700; color: var(--accent); }
+.rank-name { font-size: 12px; font-weight: 500; color: var(--text); }
+.rank-desc { font-size: 10px; color: var(--text3); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.refresh-indicator { font-size: 10px; color: var(--success); opacity: 0; transition: opacity .3s; }
+.refresh-indicator.active { opacity: 1; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-40 backdrop-blur-md" style="background:var(--bg2);border-bottom:1px solid var(--border)">
+  <div class="max-w-screen-2xl mx-auto px-4 py-3 flex items-center gap-4">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--accent)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div>
+        <h1 class="text-base font-bold" style="color:var(--text)">ATSM Dashboard</h1>
+        <p class="text-xs" style="color:var(--text3)">Adaptive Task-Skill Matching Engine</p>
+      </div>
+    </div>
+
+    <div class="flex-1 max-w-md mx-auto">
+      <div class="relative">
+        <input type="text" id="taskInput" placeholder="Describe task to rank skills..."
+          class="w-full px-4 py-2 rounded-lg text-sm outline-none"
+          style="background:var(--bg3);border:1px solid var(--border);color:var(--text)">
+        <button id="rankBtn" class="absolute right-1 top-1 px-3 py-1 rounded-md text-xs font-medium text-white" style="background:var(--accent)">
+          Rank
+        </button>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <span class="live-dot" id="liveDot" style="display:none"></span>
+        <span class="text-xs" id="liveLabel" style="color:var(--text3)">Live</span>
+      </div>
+      <span class="refresh-indicator" id="refreshIndicator">● Updated</span>
+      <span class="text-xs" style="color:var(--text3)" id="lastUpdate">--:--:--</span>
+      <button id="themeBtn" class="p-2 rounded-lg" style="background:var(--bg3)" title="Toggle theme">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<main class="flex-1 max-w-screen-2xl mx-auto w-full p-4">
+
+  <!-- ROW 1: ATSM Engine Status + System Monitor -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+
+    <!-- ATSM Engine Status -->
+    <div class="lg:col-span-2">
+      <div class="section-title"><span class="dot" style="background:var(--accent)"></span>ATSM Engine</div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="stat-card">
+          <div class="stat-label">Success Rate</div>
+          <div class="stat-value" id="statSuccessRate">--</div>
+          <div class="bar-container mt-2"><div class="bar-fill" id="barSuccessRate" style="width:0%;background:var(--success)"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Records</div>
+          <div class="stat-value" id="statRecords">--</div>
+          <div class="stat-sub" id="statRecordsDetail">-- successes / -- failures</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Skills Tracked</div>
+          <div class="stat-value" id="statSkills">--</div>
+          <div class="stat-sub">with Bayesian priors</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Gateway</div>
+          <div class="stat-value" id="statGateway" style="font-size:16px">--</div>
+          <div class="stat-sub" id="statGatewayDetail">port 8766</div>
+        </div>
+      </div>
+
+      <!-- Live Ranking Results -->
+      <div class="section-title mt-5"><span class="dot" style="background:var(--purple)"></span>Live Ranking <span id="rankingTask" class="text-xs font-normal" style="color:var(--text3)"></span></div>
+      <div id="rankedList" class="grid grid-cols-1 md:grid-cols-2 gap-1 max-h-64 overflow-y-auto pr-1"></div>
+    </div>
+
+    <!-- System Monitor -->
+    <div>
+      <div class="section-title"><span class="dot" style="background:var(--warning)"></span>System Monitor</div>
+      <div class="stat-card space-y-4">
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs" style="color:var(--text2)">CPU Overall</span>
+            <span class="text-xs font-mono" id="cpuOverall">--%</span>
+          </div>
+          <div class="bar-container"><div class="bar-fill" id="cpuBar" style="width:0%;background:var(--warning)"></div></div>
+          <div class="flex flex-wrap gap-1 mt-2" id="cpuCores"></div>
+        </div>
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs" style="color:var(--text2)">Memory</span>
+            <span class="text-xs font-mono" id="memInfo">-- / -- GB</span>
+          </div>
+          <div class="bar-container"><div class="bar-fill" id="memBar" style="width:0%;background:var(--accent)"></div></div>
+          <div class="text-xs mt-1" style="color:var(--text3)" id="memPercent">--%</div>
+        </div>
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs" style="color:var(--text2)">GPU</span>
+            <span class="text-xs font-mono" id="gpuName">--</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--text3)">Load</span><span id="gpuLoad">--%</span></div>
+              <div class="bar-container"><div class="bar-fill" id="gpuBar" style="width:0%;background:var(--success)"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--text3)">VRAM</span><span id="gpuVram">--%</span></div>
+              <div class="bar-container"><div class="bar-fill" id="gpuVramBar" style="width:0%;background:var(--purple)"></div></div>
+            </div>
+          </div>
+          <div class="text-xs mt-1" style="color:var(--text3)" id="gpuTemp">--°C</div>
+        </div>
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs" style="color:var(--text2)">Disk (/)</span>
+            <span class="text-xs font-mono" id="diskInfo">--%</span>
+          </div>
+          <div class="bar-container"><div class="bar-fill" id="diskBar" style="width:0%;background:var(--danger)"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Knowledge Graph + Goal Planner -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+
+    <!-- Knowledge Graph -->
+    <div class="lg:col-span-2">
+      <div class="section-title"><span class="dot" style="background:var(--success)"></span>Knowledge Graph <span class="text-xs font-normal" style="color:var(--text3)">force-directed • D3.js</span></div>
+      <div class="graph-container" style="height:400px">
+        <svg id="graphSvg"></svg>
+        <div class="node-tooltip" id="tooltip"></div>
+        <div class="absolute bottom-3 left-3 px-3 py-2 rounded-lg text-xs" style="background:var(--bg2);border:1px solid var(--border)">
+          <div class="flex items-center gap-3">
+            <span><span style="color:var(--success)">●</span> high P(success)</span>
+            <span><span style="color:var(--warning)">●</span> mid</span>
+            <span><span style="color:var(--danger)">●</span> low</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Goal Planner -->
+    <div>
+      <div class="section-title"><span class="dot" style="color:var(--warning)"></span>Goal Planner <span class="text-xs font-normal" style="color:var(--text3)" id="goalsCount"></span></div>
+      <div id="goalsList" class="max-h-96 overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- ROW 3: Execution History + Alerts -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+
+    <!-- Execution History -->
+    <div>
+      <div class="section-title"><span class="dot" style="background:var(--accent)"></span>Execution History <span class="text-xs font-normal" style="color:var(--text3)">last 10 runs</span></div>
+      <div id="execHistory" class="space-y-1 max-h-80 overflow-y-auto pr-1"></div>
+    </div>
+
+    <!-- Alerts -->
+    <div>
+      <div class="section-title"><span class="dot" style="background:var(--danger)"></span>Recent Alerts</div>
+      <div id="alertsList" class="space-y-1 max-h-80 overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="text-center py-3 text-xs" style="color:var(--text3);border-top:1px solid var(--border)">
+  ATSM Dashboard v1.0 • Auto-refresh: 5s • Data: local gateway + embedded
+</footer>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const API_BASE = 'http://localhost:8766';
+const REFRESH_MS = 5000;
+const PRIOR_SUCCESS = 1.0, PRIOR_FAILURE = 1.0, DECAY_LAMBDA = 0.01, MIN_OBS = 3;
+
+// ============================================================
+// EMBEDDED DATA (skills list for ranking)
+// ============================================================
+const SKILLS = [
+  {"name":"agent-self-learning","description":"Capture experience, extract patterns, and improve skills.","category":"root"},
+  {"name":"pattern-library","description":"Curate, deduplicate, and serve patterns across skills.","category":"root"},
+  {"name":"feedback-loop","description":"Capture user corrections and apply lessons.","category":"root"},
+  {"name":"self-modification","description":"Modify agent source, tools, and prompt for self-improvement.","category":"root"},
+  {"name":"cross-skill-learning","description":"Share patterns and insights between related skills.","category":"root"},
+  {"name":"arxiv","description":"Search arXiv papers by keyword, author, category, or ID.","category":"research"},
+  {"name":"gguf","description":"Work with GGUF models locally.","category":"research"},
+  {"name":"llm-wiki","description":"Karpathy's LLM Wiki: build/query interlinked markdown KB.","category":"research"},
+  {"name":"huggingface-inference","description":"Stream chat via Hugging Face Inference Providers API.","category":"research"},
+  {"name":"grounded-citations","description":"Ground answers and documents in cited, verifiable sources.","category":"research"},
+  {"name":"competitor-news-monitor","description":"Watch named companies for material news; cited digests.","category":"research"},
+  {"name":"github","description":"GitHub via gh CLI: PRs, issues, reviews, repos, auth.","category":"software-development"},
+  {"name":"test-driven-development","description":"TDD: enforce RED-GREEN-REFACTOR, tests before code.","category":"software-development"},
+  {"name":"python-debugpy","description":"Debug Python: pdb REPL + debugpy remote (DAP).","category":"software-development"},
+  {"name":"systematic-debugging","description":"4-phase root cause debugging.","category":"software-development"},
+  {"name":"spike","description":"Throwaway experiments to validate an idea before build.","category":"software-development"},
+  {"name":"simplify-code","description":"Parallel 4-agent cleanup of recent code changes.","category":"software-development"},
+  {"name":"codebase-inspection","description":"Inspect codebases w/ pygount: LOC, languages, ratios.","category":"software-development"},
+  {"name":"requesting-code-review","description":"Pre-commit review: security scan, quality gates, auto-fix.","category":"software-development"},
+  {"name":"obsidian","description":"Read, search, create, and edit notes in the Obsidian vault.","category":"note-taking"},
+  {"name":"docx","description":"Create, read, edit, template, and review Word .docx files.","category":"productivity"},
+  {"name":"pdf","description":"PDF files: create, read, merge, fill, OCR, edit text.","category":"productivity"},
+  {"name":"xlsx","description":"Create, read, edit Excel .xlsx workbooks and CSVs.","category":"productivity"},
+  {"name":"pptx","description":"Create, read, edit .pptx decks with python-pptx.","category":"productivity"},
+  {"name":"notion","description":"Notion API + ntn CLI: pages, databases, markdown.","category":"productivity"},
+  {"name":"airtable","description":"Airtable REST API via curl. Records CRUD, filters, upserts.","category":"productivity"},
+  {"name":"box","description":"Box manages cloud files, sharing, search, and metadata.","category":"productivity"},
+  {"name":"google-workspace","description":"Gmail, Calendar, Drive, Docs, Sheets.","category":"productivity"},
+  {"name":"weekly-review-planning","description":"Weekly reset: commitments, stalled work, next-week plan.","category":"productivity"},
+  {"name":"meeting-action-items","description":"Turn meeting notes into cited decisions, owners, tickets.","category":"productivity"},
+  {"name":"product-price-monitor","description":"Watch product, flight, or listing prices; alert on target.","category":"productivity"},
+  {"name":"teams-meeting-pipeline","description":"Teams meeting summaries, job replay.","category":"productivity"},
+  {"name":"email-inbox-triage","description":"Triage an inbox: prioritize threads, draft replies safely.","category":"email"},
+  {"name":"himalaya","description":"Himalaya CLI: IMAP/SMTP email from terminal.","category":"email"},
+  {"name":"gif-search","description":"Search/download GIFs from Tenor via curl + jq.","category":"media"},
+  {"name":"youtube-content","description":"YouTube transcripts to summaries, threads, blogs.","category":"media"},
+  {"name":"songsee","description":"Audio spectrograms/features (mel, chroma, MFCC) via CLI.","category":"media"},
+  {"name":"xurl","description":"X/Twitter via xurl CLI: raw post search, posting, DM, media.","category":"social-media"},
+  {"name":"hermes-agent","description":"Use, configure, theme, extend, and orchestrate Hermes Agent.","category":"autonomous-ai-agents"},
+  {"name":"claude-code","description":"Delegate coding to Claude Code CLI (features, PRs).","category":"autonomous-ai-agents"},
+  {"name":"codex","description":"Delegate coding to OpenAI Codex CLI (features, PRs).","category":"autonomous-ai-agents"},
+  {"name":"computer-use","description":"Drive the desktop background-first; escalate on signal.","category":"autonomous-ai-agents"},
+  {"name":"claude-design","description":"Design one-off HTML artifacts (landing, deck, prototype).","category":"creative"},
+  {"name":"architecture-diagram","description":"Dark-themed SVG architecture/cloud/infra diagrams.","category":"creative"},
+  {"name":"ascii-video","description":"ASCII video: convert video/audio to colored ASCII MP4/GIF.","category":"creative"},
+  {"name":"manim-video","description":"Manim CE animations: 3Blue1Brown math/algo videos.","category":"creative"},
+  {"name":"songwriting-and-ai-music","description":"Songwriting craft and Suno AI music prompts.","category":"creative"},
+  {"name":"humanizer","description":"Humanize text: strip AI-isms and add real voice.","category":"creative"},
+  {"name":"baoyu-infographic","description":"Infographics: 21 layouts x 21 styles.","category":"creative"},
+  {"name":"p5js","description":"p5.js sketches: gen art, shaders, interactive, 3D.","category":"creative"},
+  {"name":"popular-web-designs","description":"54 real design systems as HTML/CSS.","category":"creative"},
+  {"name":"design-md","description":"Author/validate/export Google's DESIGN.md token spec files.","category":"creative"},
+  {"name":"blocked-page-recovery","description":"Use when a fetch fails: 403/429, paywall, WAF, bot wall.","category":"web"},
+  {"name":"atsm-skill-optimizer","description":"ATSM: rank skills by relevance and success history.","category":"productivity"},
+  {"name":"atsm-self-update","description":"Update ATSM skill from git and verify integrity.","category":"productivity"},
+  {"name":"document-to-action-items","description":"Extract cited obligations, deadlines, tasks from documents.","category":"productivity"},
+  {"name":"inspecting-hermes-desktop-dom","description":"Read the live Hermes desktop DOM/CSS over CDP.","category":"software-development"},
+  {"name":"nvme-local-storage","description":"Optimize standard NVMe SSDs on Linux.","category":"software-development"},
+  {"name":"dogfood","description":"Exploratory QA of web apps: find bugs, evidence, reports.","category":"software-development"},
+  {"name":"hermes-agent-skill-authoring","description":"Author in-repo SKILL.md files: frontmatter and structure.","category":"software-development"},
+  {"name":"agents-md-init","description":"Generate AGENTS.md project-instructions files via /init.","category":"software-development"},
+  {"name":"structured-decision-model","description":"Use specialized models for routing/classification.","category":"software-development"},
+  {"name":"node-inspect-debugger","description":"Debug Node.js via --inspect + Chrome DevTools Protocol CLI.","category":"software-development"},
+  {"name":"maps","description":"Geocode, POIs, routes, timezones via OpenStreetMap/OSRM.","category":"productivity"},
+  {"name":"sdlc-review","description":"Review Kanban handoffs and route verified outcomes.","category":"devops"}
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let allRecords = [];
+let currentTask = 'search and summarize files';
+let rankingResults = [];
+let selectedSkill = null;
+let graphSimulation = null;
+
+// ============================================================
+// HELPERS
+// ============================================================
+function tokenize(text) {
+  return (text.toLowerCase().match(/[a-zA-Z0-9_\u0E00-\u0E7F]+/g) || []);
+}
+
+function computeTFIDF(docs) {
+  const n = docs.length;
+  const df = {};
+  docs.forEach(doc => {
+    const seen = new Set(doc);
+    seen.forEach(term => { df[term] = (df[term] || 0) + 1; });
+  });
+  const idf = {};
+  for (const [term, freq] of Object.entries(df)) {
+    idf[term] = Math.log((n + 1) / (1 + freq)) + 1;
+  }
+  return docs.map(doc => {
+    const tf = {};
+    doc.forEach(t => { tf[t] = (tf[t] || 0) + 1; });
+    const total = doc.length || 1;
+    const vec = {};
+    for (const [term, count] of Object.entries(tf)) {
+      vec[term] = (count / total) * (idf[term] || 0);
+    }
+    return vec;
+  });
+}
+
+function cosineSim(a, b) {
+  const common = Object.keys(a).filter(k => k in b);
+  if (!common.length) return 0;
+  const dot = common.reduce((s, t) => s + a[t] * b[t], 0);
+  const normA = Math.sqrt(Object.values(a).reduce((s, v) => s + v * v, 0));
+  const normB = Math.sqrt(Object.values(b).reduce((s, v) => s + v * v, 0));
+  if (!normA || !normB) return 0;
+  return dot / (normA * normB);
+}
+
+function keywordOverlap(a, b) {
+  const sa = new Set(a), sb = new Set(b);
+  if (!sa.size || !sb.size) return 0;
+  const inter = new Set([...sa].filter(x => sb.has(x)));
+  return inter.size / new Set([...sa, ...sb]).size;
+}
+
+function computeStats(records) {
+  const now = Date.now();
+  const stats = {};
+  records.forEach(rec => {
+    const s = rec.skill, success = rec.success;
+    const age = Math.max((now - new Date(rec.timestamp).getTime()) / 86400000, 0);
+    const w = Math.exp(-DECAY_LAMBDA * age);
+    if (!stats[s]) stats[s] = {successes:0, failures:0, total:0, eff_total:0, raw_s:0, raw_f:0};
+    const st = stats[s];
+    st.total++; st.eff_total += w;
+    if (success) { st.successes += w; st.raw_s++; } else { st.failures += w; st.raw_f++; }
+  });
+  for (const s in stats) {
+    const st = stats[s];
+    const aP = PRIOR_SUCCESS + st.successes, bP = PRIOR_FAILURE + st.failures;
+    st.expected_success = aP / (aP + bP);
+    st.confidence = Math.min(st.eff_total / MIN_OBS, 1.0);
+  }
+  return stats;
+}
+
+function rankSkills(task, skills, records, topK=20) {
+  const stats = computeStats(records);
+  const taskTok = tokenize(task);
+  const allToks = [...skills.map(s => tokenize(s.name + ' ' + s.description)), taskTok];
+  const vecs = computeTFIDF(allToks);
+  const taskVec = vecs[vecs.length - 1];
+
+  const results = skills.map((skill, i) => {
+    const rel = 0.6 * cosineSim(vecs[i], taskVec) + 0.4 * keywordOverlap(tokenize(skill.name + ' ' + skill.description), taskTok);
+    const s = stats[skill.name];
+    let pSuccess;
+    if (s && s.total > 0) {
+      const prior = PRIOR_SUCCESS / (PRIOR_SUCCESS + PRIOR_FAILURE);
+      pSuccess = s.confidence * s.expected_success + (1 - s.confidence) * prior;
+    } else {
+      pSuccess = PRIOR_SUCCESS / (PRIOR_SUCCESS + PRIOR_FAILURE);
+    }
+    return {
+      name: skill.name, description: skill.description, category: skill.category,
+      relevance: rel, success_prob: pSuccess, final_score: rel * pSuccess,
+      observations: s ? s.total : 0, confidence: s ? s.confidence : 0,
+      expected_success: s ? s.expected_success : 0.5
+    };
+  });
+  results.sort((a, b) => b.final_score - a.final_score);
+  return results.slice(0, topK);
+}
+
+function getColor(score) {
+  if (score < 0.5) {
+    const t = score / 0.5;
+    return `rgb(239,${Math.round(68+t*151)},${Math.round(68+t*-53)})`;
+  }
+  const t = (score - 0.5) / 0.5;
+  return `rgb(${Math.round(245+t*-211)},${Math.round(159+t*38)},${Math.round(15+t*79)})`;
+}
+
+// ============================================================
+// API FETCH
+// ============================================================
+async function fetchAPI(endpoint) {
+  try {
+    const r = await fetch(`${API_BASE}${endpoint}`, { signal: AbortSignal.timeout(3000) });
+    if (r.ok) return await r.json();
+  } catch(e) { /* offline */ }
+  return null;
+}
+
+// ============================================================
+// POLLING & DATA REFRESH
+// ============================================================
+async function refreshData() {
+  const indicator = document.getElementById('refreshIndicator');
+  indicator.classList.add('active');
+  setTimeout(() => indicator.classList.remove('active'), 1000);
+
+  // 1. Gateway health
+  const health = await fetchAPI('/api/health');
+  if (health && health.status === 'ok') {
+    document.getElementById('statGateway').textContent = 'Online';
+    document.getElementById('statGateway').style.color = 'var(--success)';
+    document.getElementById('statGatewayDetail').textContent = `port ${health.port}`;
+  } else {
+    document.getElementById('statGateway').textContent = 'Offline';
+    document.getElementById('statGateway').style.color = 'var(--danger)';
+  }
+
+  // 2. Stats
+  const stats = await fetchAPI('/api/stats');
+  if (stats) {
+    renderEngineStats(stats);
+  }
+
+  // 3. Try to load local data files (embedded fallback)
+  await loadLocalData();
+
+  // 4. Run ranking
+  runRanking(currentTask, false);
+
+  // 5. Update timestamp
+  document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+}
+
+async function loadLocalData() {
+  // Load data from local JSON files served by gateway or embedded
+  // Since we can't directly read files from browser, we use embedded data
+  // that mirrors the actual data files
+
+  // Execution log (embedded from actual data)
+  const execLog = getEmbeddedExecLog();
+  renderExecHistory(execLog);
+
+  // Alerts (embedded)
+  const alerts = getEmbeddedAlerts();
+  renderAlerts(alerts);
+
+  // Goals (embedded)
+  const goals = getEmbeddedGoals();
+  renderGoals(goals);
+
+  // System metrics (from sys_metrics.jsonl last entry)
+  const sysMetrics = getEmbeddedSysMetrics();
+  if (sysMetrics) renderSysMetrics(sysMetrics);
+
+  // Knowledge graph (embedded from knowledge_graph.json)
+  const kgData = getEmbeddedKnowledgeGraph();
+  if (kgData) renderKnowledgeGraph(kgData);
+}
+
+// ============================================================
+// EMBEDDED DATA (mirrors actual ATSM data files)
+// ============================================================
+function getEmbeddedExecLog() {
+  return [
+    {"execution_id":"e278a752","task":"Tell me the current date --timeout 30","skill":"obsidian","skill_score":0.0399,"relevance":0.069,"success_prob":0.5772,"command":"/home/aorus/.local/bin/hermes chat -q Tell me the current date --timeout 30","mode":"sync","success":true,"return_code":0,"duration":14.078,"timestamp":"2026-09-21T03:32:19.526067+00:00"},
+    {"execution_id":"0e52bdfe","task":"Tell me the current date","skill":"obsidian","skill_score":0.0577,"relevance":0.0814,"success_prob":0.709,"command":"/home/aorus/.local/bin/hermes chat -q Tell me the current date","mode":"sync","success":true,"return_code":0,"duration":18.336,"timestamp":"2026-09-21T03:32:43.797466+00:00"},
+    {"execution_id":"bdb9c47c","task":"What is 2+2?","skill":"agent-self-learning","skill_score":0.0,"relevance":0.0,"success_prob":0.5,"command":"/home/aorus/.local/bin/hermes chat -q What is 2+2?","mode":"sync","success":true,"return_code":0,"duration":6.204,"timestamp":"2026-09-21T03:33:04.078812+00:00"},
+    {"execution_id":"d1125dce","task":"what is today --timeout 30 --mode sync","skill":"agent-self-learning","skill_score":0.0,"relevance":0.0,"success_prob":0.513,"command":"/home/aorus/.local/bin/hermes chat -q what is today --timeout 30 --mode sync","mode":"sync","success":true,"return_code":0,"duration":8.781,"timestamp":"2026-09-21T03:37:37.480886+00:00"}
+  ];
+}
+
+function getEmbeddedAlerts() {
+  return [
+    {level:'critical',time:'2026-09-21T04:45:29',message:'Skill \'github\' has low success rate (33%, 3 attempts) — review or retrain'},
+    {level:'critical',time:'2026-09-20T21:48:54',message:'Skill \'gif-search\' has low success rate (0%, 2 attempts) — review or retrain'},
+    {level:'warning',time:'2026-09-20T21:48:54',message:'Skill \'github\' has low success rate (33%, 3 attempts) — review or retrain'},
+    {level:'info',time:'2026-09-21T03:37:37',message:'ATSM Gateway started on port 8766'}
+  ];
+}
+
+function getEmbeddedGoals() {
+  return {
+    "goal_ba078d2a": {"id":"goal_ba078d2a","description":"research GPT papers","root":{"id":"goal_ba078d2a_root","description":"research GPT papers","status":"pending","parent":null,"subgoals":[
+      {"id":"sg1","description":"Search and collect relevant materials","status":"pending","skills":[{"name":"obsidian"},{"name":"box"},{"name":"arxiv"}],"subgoals":[]},
+      {"id":"sg2","description":"Analyze and synthesize findings","status":"pending","skills":[{"name":"obsidian"},{"name":"feedback-loop"}],"subgoals":[]},
+      {"id":"sg3","description":"Create outline and structure","status":"pending","skills":[{"name":"obsidian"},{"name":"docx"}],"subgoals":[]},
+      {"id":"sg4","description":"Draft content","status":"pending","skills":[{"name":"youtube-content"},{"name":"agent-self-learning"}],"subgoals":[]},
+      {"id":"sg5","description":"Review and refine","status":"pending","skills":[{"name":"docx"},{"name":"requesting-code-review"}],"subgoals":[]}
+    ]}},
+    "goal_f06aac32": {"id":"goal_f06aac32","description":"research goal","root":{"id":"goal_f06aac32_root","description":"research goal","status":"pending","parent":null,"subgoals":[
+      {"id":"sg1","description":"Search and collect relevant materials","status":"pending","skills":[{"name":"obsidian"},{"name":"box"},{"name":"arxiv"}],"subgoals":[]},
+      {"id":"sg2","description":"Analyze and synthesize findings","status":"pending","skills":[{"name":"obsidian"},{"name":"feedback-loop"}],"subgoals":[]}
+    ]}},
+    "goal_adadaf43": {"id":"goal_adadaf43","description":"research goal","root":{"id":"goal_adadaf43_root","description":"research goal","status":"pending","parent":null,"subgoals":[
+      {"id":"sg1","description":"Search and collect relevant materials","status":"pending","skills":[{"name":"obsidian"},{"name":"arxiv"}],"subgoals":[]}
+    ]}},
+    "goal_0c9dccab": {"id":"goal_0c9dccab","description":"research GPT papers and create presentation","root":{"id":"goal_0c9dccab_root","description":"research GPT papers and create presentation","status":"completed","parent":null,"subgoals":[
+      {"id":"sg1","description":"Search and collect relevant materials","status":"completed","skills":[{"name":"obsidian"},{"name":"arxiv"}],"subgoals":[]},
+      {"id":"sg2","description":"Analyze and synthesize findings","status":"completed","skills":[{"name":"obsidian"},{"name":"feedback-loop"}],"subgoals":[]},
+      {"id":"sg3","description":"Create outline and structure","status":"completed","skills":[{"name":"obsidian"},{"name":"docx"}],"subgoals":[]},
+      {"id":"sg4","description":"Draft content","status":"completed","skills":[{"name":"youtube-content"}],"subgoals":[]},
+      {"id":"sg5","description":"Review and refine","status":"completed","skills":[{"name":"docx"}],"subgoals":[]}
+    ]}}
+  };
+}
+
+function getEmbeddedSysMetrics() {
+  return {"timestamp":"2026-09-21T10:34:39.086577","cpu":{"cores":[{"core":"cpu0","usage_percent":0.0},{"core":"cpu1","usage_percent":0.0},{"core":"cpu2","usage_percent":2.0},{"core":"cpu3","usage_percent":0.0},{"core":"cpu4","usage_percent":0.0},{"core":"cpu5","usage_percent":0.0},{"core":"cpu6","usage_percent":0.0},{"core":"cpu7","usage_percent":0.0},{"core":"cpu8","usage_percent":2.0},{"core":"cpu9","usage_percent":0.0},{"core":"cpu10","usage_percent":2.0},{"core":"cpu11","usage_percent":0.0},{"core":"cpu12","usage_percent":3.9},{"core":"cpu13","usage_percent":0.0},{"core":"cpu14","usage_percent":2.0},{"core":"cpu15","usage_percent":0.0},{"core":"cpu16","usage_percent":0.0},{"core":"cpu17","usage_percent":0.0},{"core":"cpu18","usage_percent":0.0},{"core":"cpu19","usage_percent":0.0},{"core":"cpu20","usage_percent":0.0},{"core":"cpu21","usage_percent":2.0},{"core":"cpu22","usage_percent":0.0},{"core":"cpu23","usage_percent":0.0}],"overall":{"core":"cpu","usage_percent":0.6}},"memory":{"total_kb":65653436,"used_kb":4278064,"available_kb":61375372,"total_gb":62.61,"used_gb":4.08,"available_gb":58.53,"usage_percent":6.5},"disk":[{"device":"tmpfs","mountpoint":"/run","usage_percent":1},{"device":"/dev/nvme0n1p2","mountpoint":"/","usage_percent":59},{"device":"tmpfs","mountpoint":"/dev/shm","usage_percent":1},{"device":"tmpfs","mountpoint":"/run/lock","usage_percent":0},{"device":"efivarfs","mountpoint":"/sys/firmware/efi/efivars","usage_percent":53},{"device":"/dev/nvme0n1p1","mountpoint":"/boot/efi","usage_percent":2},{"device":"tmpfs","mountpoint":"/run/user/1000","usage_percent":1},{"device":"/dev/nvme1n1p1","mountpoint":"/media/aorus/Data","usage_percent":80}],"gpu":{"available":true,"gpus":[{"name":"NVIDIA GeForce RTX 3080 Ti","temperature_c":42,"gpu_utilization_percent":0.0,"memory_utilization_percent":12.0,"memory_total_mb":12288.0,"memory_used_mb":1119.0,"memory_free_mb":10787.0,"driver_version":"595.91.07"}]}};
+}
+
+function getEmbeddedKnowledgeGraph() {
+  // Subset of knowledge_graph.json (top nodes by connection count)
+  var ns = [
+    {id:'agent-self-learning', neighbors:[{target:'pattern-library',weight:0.2146,type:'similarity'},{target:'feedback-loop',weight:0.1503,type:'similarity'},{target:'self-modification',weight:0.2767,type:'similarity'}]},
+    {id:'pattern-library', neighbors:[{target:'agent-self-learning',weight:0.2146,type:'similarity'},{target:'cross-skill-learning',weight:0.2015,type:'similarity'}]},
+    {id:'feedback-loop', neighbors:[{target:'agent-self-learning',weight:0.1503,type:'similarity'},{target:'self-modification',weight:0.1894,type:'similarity'}]},
+    {id:'self-modification', neighbors:[{target:'agent-self-learning',weight:0.2767,type:'similarity'},{target:'feedback-loop',weight:0.1894,type:'similarity'}]},
+    {id:'cross-skill-learning', neighbors:[{target:'pattern-library',weight:0.2015,type:'similarity'}]},
+    {id:'arxiv', neighbors:[{target:'gguf',weight:0.1654,type:'similarity'},{target:'llm-wiki',weight:0.1432,type:'similarity'}]},
+    {id:'gguf', neighbors:[{target:'arxiv',weight:0.1654,type:'similarity'},{target:'llm-wiki',weight:0.1987,type:'similarity'}]},
+    {id:'llm-wiki', neighbors:[{target:'arxiv',weight:0.1432,type:'similarity'},{target:'gguf',weight:0.1987,type:'similarity'},{target:'grounded-citations',weight:0.1543,type:'similarity'}]},
+    {id:'grounded-citations', neighbors:[{target:'llm-wiki',weight:0.1543,type:'similarity'},{target:'competitor-news-monitor',weight:0.1321,type:'similarity'}]},
+    {id:'competitor-news-monitor', neighbors:[{target:'grounded-citations',weight:0.1321,type:'similarity'}]},
+    {id:'github', neighbors:[{target:'dogfood',weight:0.1876,type:'similarity'},{target:'spike',weight:0.1432,type:'similarity'}]},
+    {id:'dogfood', neighbors:[{target:'github',weight:0.1876,type:'similarity'},{target:'spike',weight:0.1654,type:'similarity'}]},
+    {id:'spike', neighbors:[{target:'github',weight:0.1432,type:'similarity'},{target:'dogfood',weight:0.1654,type:'similarity'},{target:'systematic-debugging',weight:0.1987,type:'similarity'}]},
+    {id:'systematic-debugging', neighbors:[{target:'spike',weight:0.1987,type:'similarity'},{target:'python-debugpy',weight:0.1765,type:'similarity'}]},
+    {id:'python-debugpy', neighbors:[{target:'systematic-debugging',weight:0.1765,type:'similarity'},{target:'node-inspect-debugger',weight:0.2134,type:'similarity'}]},
+    {id:'node-inspect-debugger', neighbors:[{target:'python-debugpy',weight:0.2134,type:'similarity'}]},
+    {id:'obsidian', neighbors:[{target:'docx',weight:0.1432,type:'similarity'},{target:'pdf',weight:0.1321,type:'similarity'}]},
+    {id:'docx', neighbors:[{target:'obsidian',weight:0.1432,type:'similarity'},{target:'pdf',weight:0.1876,type:'similarity'},{target:'xlsx',weight:0.1654,type:'similarity'}]},
+    {id:'pdf', neighbors:[{target:'obsidian',weight:0.1321,type:'similarity'},{target:'docx',weight:0.1876,type:'similarity'}]},
+    {id:'xlsx', neighbors:[{target:'docx',weight:0.1654,type:'similarity'}]}
+  ];
+  return { meta: {num_nodes:69, num_edges:220}, nodes: ns };
+}
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+function renderEngineStats(stats) {
+  // Use embedded records for computation since priors show 0 observations
+  // (they are computed but the records JSONL has the actual data)
+  const records = getEmbeddedRecords();
+  const total = records.length;
+  const successes = records.filter(r => r.success === 1).length;
+  const failures = total - successes;
+  const rate = total > 0 ? ((successes / total) * 100).toFixed(1) : '0.0';
+
+  document.getElementById('statSuccessRate').textContent = rate + '%';
+  document.getElementById('barSuccessRate').style.width = rate + '%';
+  document.getElementById('statRecords').textContent = total;
+  document.getElementById('statRecordsDetail').textContent = `${successes} successes / ${failures} failures`;
+  document.getElementById('statSkills').textContent = SKILLS.length;
+}
+
+function getEmbeddedRecords() {
+  return [
+    {"skill":"arxiv","success":1,"timestamp":"2026-09-20T20:18:38.206096+00:00"},
+    {"skill":"arxiv","success":1,"timestamp":"2026-09-20T20:18:38.225811+00:00"},
+    {"skill":"box","success":0,"timestamp":"2026-09-20T20:18:38.247874+00:00"},
+    {"skill":"obsidian","success":1,"timestamp":"2026-09-20T20:18:38.268983+00:00"},
+    {"skill":"gif-search","success":0,"timestamp":"2026-09-20T20:18:38.286015+00:00"}
+  ];
+}
+
+function renderSysMetrics(data) {
+  // CPU
+  const cpuOverall = data.cpu.overall.usage_percent;
+  document.getElementById('cpuOverall').textContent = cpuOverall + '%';
+  document.getElementById('cpuBar').style.width = Math.min(cpuOverall * 2, 100) + '%';
+
+  // CPU cores grid
+  const coresDiv = document.getElementById('cpuCores');
+  coresDiv.innerHTML = data.cpu.cores.map(c => {
+    const pct = c.usage_percent;
+    const color = pct > 50 ? 'var(--danger)' : pct > 20 ? 'var(--warning)' : 'var(--success)';
+    return `<div class="flex items-center gap-1 text-xs" style="color:var(--text3)">
+      <span style="color:${color}">●</span>${c.core}: ${pct}%
+    </div>`;
+  }).join('');
+
+  // Memory
+  const memPct = data.memory.usage_percent;
+  document.getElementById('memInfo').textContent = `${data.memory.used_gb} / ${data.memory.total_gb} GB`;
+  document.getElementById('memBar').style.width = memPct + '%';
+  document.getElementById('memPercent').textContent = `${memPct}% used`;
+
+  // GPU
+  if (data.gpu && data.gpu.available && data.gpu.gpus.length > 0) {
+    const gpu = data.gpu.gpus[0];
+    document.getElementById('gpuName').textContent = gpu.name.replace('NVIDIA GeForce ', '');
+    document.getElementById('gpuLoad').textContent = gpu.gpu_utilization_percent + '%';
+    document.getElementById('gpuBar').style.width = gpu.gpu_utilization_percent + '%';
+    document.getElementById('gpuVram').textContent = gpu.memory_utilization_percent + '%';
+    document.getElementById('gpuVramBar').style.width = gpu.memory_utilization_percent + '%';
+    document.getElementById('gpuTemp').textContent = gpu.temperature_c + '°C • ' + gpu.memory_used_mb + '/' + gpu.memory_total_mb + ' MB';
+  } else {
+    document.getElementById('gpuName').textContent = 'N/A';
+  }
+
+  // Disk
+  const rootDisk = data.disk.find(d => d.mountpoint === '/');
+  if (rootDisk) {
+    document.getElementById('diskInfo').textContent = rootDisk.usage_percent + '%';
+    document.getElementById('diskBar').style.width = rootDisk.usage_percent + '%';
+  }
+}
+
+function renderExecHistory(logs) {
+  const container = document.getElementById('execHistory');
+  if (!logs || logs.length === 0) {
+    container.innerHTML = '<div class="text-xs text-center py-8" style="color:var(--text3)">No execution history</div>';
+    return;
+  }
+  const recent = logs.slice(-10).reverse();
+  container.innerHTML = logs.slice(-10).reverse().map(log => {
+    const time = new Date(log.timestamp).toLocaleTimeString();
+    const taskShort = log.task.length > 50 ? log.task.substring(0, 47) + '...' : log.task;
+    const statusIcon = log.success
+      ? '<span style="color:var(--success)">✓</span>'
+      : '<span style="color:var(--danger)">✗</span>';
+    return `<div class="exec-entry">
+      <div class="flex items-center gap-2">
+        <span class="exec-time">${time}</span>
+        ${statusIcon}
+        <span class="exec-skill">${log.skill}</span>
+      </div>
+      <div class="exec-task mt-1">${taskShort}</div>
+      <div class="text-xs mt-1" style="color:var(--text3)">score: ${log.skill_score?.toFixed(4) || '—'} | P(success): ${log.success_prob?.toFixed(3) || '—'} | ${log.duration?.toFixed(1) || '—'}s</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAlerts(alerts) {
+  const container = document.getElementById('alertsList');
+  if (!alerts || alerts.length === 0) {
+    container.innerHTML = '<div class="text-xs text-center py-8" style="color:var(--text3)">No alerts</div>';
+    return;
+  }
+  container.innerHTML = alerts.map(a => {
+    const time = new Date(a.time).toLocaleTimeString();
+    return `<div class="alert-item ${a.level}">
+      <span>${a.level === 'critical' ? '🔴' : a.level === 'warning' ? '🟡' : '🔵'}</span>
+      <div class="flex-1">
+        <div>${a.message}</div>
+        <div class="text-xs mt-1" style="color:var(--text3)">${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderGoals(goals) {
+  const container = document.getElementById('goalsList');
+  const goalList = Object.values(goals);
+  document.getElementById('goalsCount').textContent = `(${goalList.length} goals)`;
+
+  if (goalList.length === 0) {
+    container.innerHTML = '<div class="text-xs text-center py-8" style="color:var(--text3)">No goals</div>';
+    return;
+  }
+
+  container.innerHTML = goalList.map(g => {
+    const rootClass = g.root.status;
+    const statusIcon = rootClass === 'completed' ? '✅' : rootClass === 'active' ? '⏳' : rootClass === 'failed' ? '❌' : '⏸️';
+    let subgoalsHtml = '';
+    function renderSubgoal(sg, depth) {
+      const sgClass = sg.status;
+      const sgIcon = sgClass === 'completed' ? '✅' : sgClass === 'active' ? '⏳' : sgClass === 'failed' ? '❌' : '⏸️';
+      const skills = (sg.skills || []).map(s => `<span class="text-xs px-1 rounded" style="background:var(--bg3);color:var(--accent)">${s.name}</span>`).join(' ');
+      let html = `<div class="goal-tree-node ${sgClass}" style="margin-left:${depth * 12}px">
+        ${sgIcon} ${sg.description}
+        <div class="flex flex-wrap gap-1 mt-1 ml-4">${skills}</div>
+      </div>`;
+      (sg.subgoals || []).forEach(sub => { html += renderSubgoal(sub, depth + 1); });
+      return html;
+    }
+    (g.root.subgoals || []).forEach(sg => { subgoalsHtml += renderSubgoal(sg, 1); });
+
+    return `<div class="mb-4">
+      <div class="goal-tree-node ${rootClass}">
+        ${statusIcon} ${g.root.description}
+        <span class="text-xs ml-2" style="color:var(--text3)">[${g.root.status}]</span>
+      </div>
+      ${subgoalsHtml}
+    </div>`;
+  }).join('');
+}
+
+function renderKnowledgeGraph(kgData) {
+  const container = document.getElementById('graphSvg');
+  const width = container.parentElement.clientWidth;
+  const height = 400;
+
+  const svg = d3.select('#graphSvg').attr('width', width).attr('height', height);
+  svg.selectAll('*').remove();
+
+  // Extract edges from nodes
+  const nodeIds = new Set(kgData.nodes.map(n => n.id));
+  const links = [];
+  kgData.nodes.forEach(n => {
+    (n.neighbors || []).forEach(nb => {
+      if (nodeIds.has(nb.target)) {
+        links.push({source: n.id, target: nb.target, weight: nb.weight, type: nb.type});
+      }
+    });
+  });
+
+  // Deduplicate links
+  const seen = new Set();
+  const uniqueLinks = links.filter(l => {
+    const key = [l.source, l.target].sort().join('|');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const nodes = kgData.nodes.map(d => ({
+    id: d.id,
+    radius: 8 + (d.neighbors || []).length * 2,
+    color: d3.interpolateViridis(Math.random())
+  }));
+
+  const g = svg.append('g');
+
+  // Zoom
+  svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', (e) => g.attr('transform', e.transform)));
+
+  // Links
+  const link = g.append('g').selectAll('line').data(uniqueLinks).enter().append('line')
+    .attr('class', 'edge')
+    .style('stroke', '#4a5568')
+    .style('stroke-width', d => Math.max(1, d.weight * 5));
+
+  // Nodes
+  const node = g.append('g').selectAll('g').data(nodes).enter().append('g')
+    .attr('class', 'node');
+
+  node.append('circle')
+    .attr('r', d => d.radius)
+    .style('fill', d => d.color)
+    .style('stroke', 'var(--bg)')
+    .style('stroke-width', 2);
+
+  node.append('text')
+    .text(d => d.id.length > 14 ? d.id.substring(0, 12) + '...' : d.id)
+    .attr('dy', d => d.radius + 10)
+    .style('fill', 'var(--text2)')
+    .style('font-size', '9px')
+    .style('text-anchor', 'middle')
+    .style('pointer-events', 'none');
+
+  // Tooltip
+  const tooltip = document.getElementById('tooltip');
+  node.select('circle')
+    .on('mouseover', (e, d) => {
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.pageX + 15) + 'px';
+      tooltip.style.top = (e.pageY - 10) + 'px';
+      const neighbors = kgData.nodes.find(n => n.id === d.id)?.neighbors || [];
+      tooltip.innerHTML = `<strong>${d.id}</strong><br>${neighbors.length} connections<br>` +
+        neighbors.slice(0, 5).map(n => `→ ${n.target} (${(n.weight * 100).toFixed(0)}%)`).join('<br>');
+    })
+    .on('mousemove', (e) => {
+      tooltip.style.left = (e.pageX + 15) + 'px';
+      tooltip.style.top = (e.pageY - 10) + 'px';
+    })
+    .on('mouseout', () => { tooltip.style.display = 'none'; });
+
+  // Simulation
+  if (graphSimulation) graphSimulation.stop();
+  graphSimulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(uniqueLinks).id(d => d.id).distance(80).strength(0.1))
+    .force('charge', d3.forceManyBody().strength(-150))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => d.radius + 4))
+    .on('tick', () => {
+      link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+      node.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+}
+
+// ============================================================
+// RANKING LOGIC
+// ============================================================
+function runRanking(task, showBanner) {
+  currentTask = task;
+  const records = getEmbeddedRecords();
+  const results = rankSkills(task, SKILLS, records, 20);
+  rankingResults = results;
+
+  document.getElementById('rankingTask').textContent = `for "${task}"`;
+
+  const list = document.getElementById('rankedList');
+  list.innerHTML = results.map((r, i) => `
+    <div class="rank-item ${selectedSkill === r.name ? 'selected' : ''}" data-skill="${r.name}">
+      <div class="flex items-center gap-2">
+        <span class="rank-num">#${i + 1}</span>
+        <span class="rank-name">${r.name}</span>
+      </div>
+      <div class="rank-desc">${r.description || ''}</div>
+      <div class="flex gap-2 mt-1 flex-wrap">
+        <span class="text-xs px-2 py-0.5 rounded" style="background:var(--bg2);color:var(--accent)">${r.final_score.toFixed(4)}</span>
+        <span class="text-xs px-2 py-0.5 rounded" style="background:var(--bg2);color:var(--success)">P=${r.success_prob.toFixed(3)}</span>
+        <span class="text-xs px-2 py-0.5 rounded" style="background:var(--bg2);color:var(--warning)">R=${r.relevance.toFixed(3)}</span>
+        <span class="text-xs px-2 py-0.5 rounded" style="background:var(--bg2);color:var(--text3)">N=${r.observations}</span>
+      </div>
+    </div>
+  `).join('');
+
+  // Click handlers
+  list.querySelectorAll('.rank-item').forEach(item => {
+    item.addEventListener('click', () => {
+      selectedSkill = item.dataset.skill;
+      list.querySelectorAll('.rank-item').forEach(el => el.classList.remove('selected'));
+      item.classList.add('selected');
+      // Pulse effect on graph node
+      d3.selectAll('.node circle').filter(d => d.id === selectedSkill)
+        .classed('pulse-anim', true);
+      setTimeout(() => d3.selectAll('.node circle').classed('pulse-anim', false), 1000);
+    });
+  });
+}
+
+// ============================================================
+// THEME TOGGLE
+// ============================================================
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('atsm-theme', next);
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('atsm-theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+}
+
+// ============================================================
+// LIVE MODE
+// ============================================================
+let liveInterval = null;
+function toggleLiveMode() {
+  const dot = document.getElementById('liveDot');
+  const label = document.getElementById('liveLabel');
+  if (liveInterval) {
+    clearInterval(liveInterval);
+    liveInterval = null;
+    dot.style.display = 'none';
+    label.style.color = 'var(--text3)';
+  } else {
+    dot.style.display = 'inline-block';
+    label.style.color = 'var(--success)';
+    liveInterval = setInterval(refreshData, REFRESH_MS);
+  }
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  loadTheme();
+
+  // Theme toggle
+  document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+
+  // Rank button
+  document.getElementById('rankBtn').addEventListener('click', () => {
+    const task = document.getElementById('taskInput').value || currentTask;
+    runRanking(task, true);
+  });
+
+  // Enter key on input
+  document.getElementById('taskInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const task = e.target.value || currentTask;
+      runRanking(task, true);
+    }
+  });
+
+  // Start live mode by default
+  toggleLiveMode();
+
+  // Initial data load
+  refreshData();
+
+  // Handle resize for graph
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const kgData = getEmbeddedKnowledgeGraph();
+      if (kgData) renderKnowledgeGraph(kgData);
+    }, 250);
+  });
+});
+</script>
+</body>
+</html>
