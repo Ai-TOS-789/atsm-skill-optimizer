@@ -1,9 +1,9 @@
 {
-  "agent_name": "proactive-agent",
+  "agent_name": "self_evolving_agent",
   "instance_id": "ad0cdac3",
-  "cycle_count": 49,
+  "cycle_count": 59,
   "started_at": "2026-09-20T21:45:07.944383+00:00",
-  "last_cycle": "2026-09-21T04:43:36.985071+00:00",
+  "last_cycle": "2026-09-21T05:03:41.244422+00:00",
   "issue_history": [
     {
       "id": "e1926e49",
@@ -964,6 +964,126 @@
       "severity": "info",
       "resolution": null,
       "resolved_at": null
+    },
+    {
+      "id": "210630bc",
+      "timestamp": "2026-09-21T04:48:54.363395+00:00",
+      "status": "open",
+      "description": "Skill 'gif-search' has low success rate (0%, 2 attempts) — review or retrain",
+      "source": "unknown",
+      "severity": "info",
+      "resolution": null,
+      "resolved_at": null
+    },
+    {
+      "id": "c5e84f9b",
+      "timestamp": "2026-09-21T04:48:54.363877+00:00",
+      "status": "open",
+      "description": "Skill 'github' has low success rate (33%, 3 attempts) — review or retrain",
+      "source": "unknown",
+      "severity": "info",
+      "resolution": null,
+      "resolved_at": null
+    },
+    {
+      "id": "2c0ce01c",
+      "timestamp": "2026-09-21T04:54:11.987725+00:00",
+      "status": "open",
+      "description": "Skill 'gif-search' has low success rate (0%, 2 attempts) — review or retrain",
+      "source": "unknown",
+      "severity": "info",
+      "resolution": null,
+      "resolved_at": null
+    },
+    {
+      "id": "9dc069fd",
+      "timestamp": "2026-09-21T04:54:11.988237+00:00",
+      "status": "open",
+      "description": "Skill 'github' has low success rate (33%, 3 attempts) — review or retrain",
+      "source": "unknown",
+      "severity": "info",
+      "resolution": null,
+      "resolved_at": null
+    },
+    {
+      "id": "ba7d020c",
+      "timestamp": "2026-09-21T04:54:16.931470+00:00",
+      "status": "open",
+      "description": "Skill 'gif-search' has low success rate (0%, 2 attempts) — review or retrain",
+      "source": "unknown",
+      "severity": "info",
+      "resolution": null,
+      "resolved_at": null
+    },
+    {
+      "id": "73368031",
+      "timestamp": "2026-09-21T04:54:16.931975+00:00",
+      "status": "open",
+      "description": "Skill 'github' has low success rate (33%, 3 attempts) — review or retrain",
+      "source": "unknown",
+      "severity": "info",
+      "resolution": null,
+      "resolved_at": null
+    },
+    {
+      "id": "38e0e32c",
+      "timestamp": "2026-09-21T04:56:08.614243+00:00",
+      "status": "open",
+      "description": "Skill 'gif-search' has low success rate (0%, 2 attempts) — review or retrain",
+      "source": "unknown",
+      "severity": "info",
+      "resolution": null,
+      "resolved_at": null
+    },
+    {
+      "id": "9f0b5d9c",
+      "timestamp": "2026-09-21T04:56:08.614753+00:00",
+      "status": "open",
+      "description": "Skill 'github' has low success rate (33%, 3 attempts) — review or retrain",
+      "source": "unknown",
+      "severity": "info",
+      "resolution": null,
+      "resolved_at": null
+    },
+    {
+      "id": "24de5aad",
+      "timestamp": "2026-09-21T04:59:29.398676+00:00",
+      "status": "open",
+      "description": "Skill 'gif-search' has low success rate (0%, 2 attempts) — review or retrain",
+      "source": "unknown",
+      "severity": "info",
+      "resolution": null,
+      "resolved_at": null
+    },
+    {
+      "id": "56e45e56",
+      "timestamp": "2026-09-21T04:59:29.399205+00:00",
+      "status": "open",
+      "description": "Skill 'github' has low success rate (33%, 3 attempts) — review or retrain",
+      "source": "unknown",
+      "severity": "info",
+      "resolution": null,
+      "resolved_at": null
+    },
+    {
+      "id": "00401808",
+      "timestamp": "2026-09-21T05:03:24.487464+00:00",
+      "status": "open",
+      "description": "Skill 'gif-search' has low success rate (0%, 2 attempts) — review or retrain",
+      "source": "unknown",
+      "severity": "info",
+      "resolution": null,
+      "resolved_at": null
+    },
+    {
+      "id": "da49b7fa",
+      "timestamp": "2026-09-21T05:03:24.487982+00:00",
+      "status": "open",
+      "description": "Skill 'github' has low success rate (33%, 3 attempts) — review or retrain",
+      "source": "unknown",
+      "severity": "info",
+      "resolution": null,
+      "resolved_at": null
     }
   ],
   "skill_performance_log": {},
@@ -974,6 +1094,41 @@
       "timestamp": "2026-09-20T21:45:08.000147+00:00",
       "text": "arxiv skill works best with site:arxiv.org filter",
       "context": "research-workflow",
+      "applied_count": 0
+    },
+    {
+      "id": "8f2e8fd3",
+      "timestamp": "2026-09-21T04:54:33.526485+00:00",
+      "text": "Cycle #9a91fb13: 2 issues",
+      "context": "cycle_summary",
+      "applied_count": 0
+    },
+    {
+      "id": "2668e468",
+      "timestamp": "2026-09-21T04:58:34.714136+00:00",
+      "text": "Processed proactive task: Skill 'gif-search' has low success rate (0%, 2 attempts) — r — failure",
+      "context": "proactive-task",
+      "applied_count": 0
+    },
+    {
+      "id": "ca88b74c",
+      "timestamp": "2026-09-21T04:58:34.741930+00:00",
+      "text": "Auto-created skill for detected tool: docker",
+      "context": "self-modify",
+      "applied_count": 0
+    },
+    {
+      "id": "50570dee",
+      "timestamp": "2026-09-21T05:00:01.383662+00:00",
+      "text": "Processed proactive task: Skill 'gif-search' has low success rate (0%, 2 attempts) — r — success",
+      "context": "proactive-task",
+      "applied_count": 0
+    },
+    {
+      "id": "4098ecd3",
+      "timestamp": "2026-09-21T05:03:41.245043+00:00",
+      "text": "Cycle #972fcca9: 2 issues",
+      "context": "cycle_summary",
       "applied_count": 0
     }
   ]

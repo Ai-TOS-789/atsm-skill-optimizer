@@ -34,3 +34,8 @@
 {"skill": "test_skill_record", "success": 1, "agent": "default", "timestamp": "2026-09-21T04:30:13.165155+00:00"}
 {"skill": "test_skill_record", "success": 1, "agent": "default", "timestamp": "2026-09-21T04:36:06.980747+00:00"}
 {"skill": "test_skill_record", "success": 1, "agent": "default", "timestamp": "2026-09-21T04:42:55.146016+00:00"}
+{"skill": "arxiv", "success": 0, "agent": "default", "timestamp": "2026-09-21T04:58:34.689574+00:00"}
+{"skill": "arxiv", "success": 0, "agent": "default", "timestamp": "2026-09-21T04:58:34.711565+00:00"}
+{"skill": "docker", "success": 1, "agent": "auto-skill-generator", "timestamp": "2026-09-21T04:58:34.739361+00:00", "note": "Auto-registered with neutral prior P(success)=0.5"}
+{"skill": "arxiv", "success": 1, "agent": "default", "timestamp": "2026-09-21T05:00:01.356756+00:00"}
+{"skill": "arxiv", "success": 1, "agent": "default", "timestamp": "2026-09-21T05:00:01.380830+00:00"}
