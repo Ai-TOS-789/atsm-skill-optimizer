@@ -1,0 +1,4 @@
+{"model": "local", "success": 1, "skill": "atsm-skill-optimizer", "latency_ms": 1200.0, "cost_usd": null, "task": "", "timestamp": "2026-09-21T00:14:14.493014+00:00"}
+{"model": "cloud_free_qwen", "success": 1, "skill": "arxiv", "latency_ms": 800.0, "cost_usd": null, "task": "", "timestamp": "2026-09-21T00:14:14.511647+00:00"}
+{"model": "cloud_free_gemini", "success": 1, "skill": "research", "latency_ms": 400.0, "cost_usd": null, "task": "", "timestamp": "2026-09-21T00:14:14.531537+00:00"}
+{"model": "local", "success": 0, "skill": "atsm-skill-optimizer", "latency_ms": 2500.0, "cost_usd": null, "task": "", "timestamp": "2026-09-21T00:14:14.550566+00:00"}

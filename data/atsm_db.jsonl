@@ -19,3 +19,6 @@
 {"skill": "feedback-loop", "success": 1, "agent": "agentA", "timestamp": "2026-09-20T23:46:46.438648+00:00"}
 {"skill": "feedback-loop", "success": 1, "agent": "agentA", "timestamp": "2026-09-20T23:46:46.457251+00:00"}
 {"skill": "feedback-loop", "success": 1, "agent": "agentA", "timestamp": "2026-09-20T23:46:46.477841+00:00"}
+{"skill": "yes", "success": 1, "agent": "auto-skill-generator", "timestamp": "2026-09-21T00:15:08.490056+00:00", "note": "Auto-registered with neutral prior P(success)=0.5"}
+{"skill": "test-skill", "success": 1, "agent": "auto-skill-generator", "timestamp": "2026-09-21T00:15:39.047182+00:00", "note": "Auto-registered with neutral prior P(success)=0.5"}
+{"skill": "test-skill", "success": 1, "agent": "auto-skill-generator", "timestamp": "2026-09-21T00:17:10.570947+00:00", "note": "Auto-registered with neutral prior P(success)=0.5"}

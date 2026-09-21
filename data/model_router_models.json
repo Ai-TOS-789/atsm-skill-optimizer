@@ -1,0 +1,105 @@
+{
+  "local": {
+    "id": "hermes-4-36b-q3_k_m",
+    "provider": "local",
+    "engine": "llama.cpp",
+    "quant": "Q3_K_M",
+    "params": 36,
+    "ctx": 8192,
+    "cost_per_1k": 0.0,
+    "speed": "medium",
+    "strengths": [
+      "simple",
+      "fast",
+      "private",
+      "offline"
+    ],
+    "supports_thai": false,
+    "endpoint": null
+  },
+  "cloud_free_qwen": {
+    "id": "qwen/qwen-2.5-72b-instruct:free",
+    "provider": "openrouter",
+    "engine": "openrouter",
+    "quant": "fp16",
+    "params": 72,
+    "ctx": 32768,
+    "cost_per_1k": 0.0,
+    "speed": "medium",
+    "strengths": [
+      "complex",
+      "reasoning",
+      "multilingual",
+      "thai"
+    ],
+    "supports_thai": true,
+    "endpoint": "https://openrouter.ai/api/v1/chat/completions"
+  },
+  "cloud_free_llama": {
+    "id": "meta-llama/llama-3.1-70b-instruct:free",
+    "provider": "openrouter",
+    "engine": "openrouter",
+    "quant": "fp16",
+    "params": 70,
+    "ctx": 16384,
+    "cost_per_1k": 0.0,
+    "speed": "fast",
+    "strengths": [
+      "complex",
+      "reasoning",
+      "code"
+    ],
+    "supports_thai": false,
+    "endpoint": "https://openrouter.ai/api/v1/chat/completions"
+  },
+  "cloud_free_gemini": {
+    "id": "google/gemini-2.0-flash-001:free",
+    "provider": "openrouter",
+    "engine": "openrouter",
+    "quant": "fp16",
+    "params": 200,
+    "ctx": 8192,
+    "cost_per_1k": 0.0,
+    "speed": "very_fast",
+    "strengths": [
+      "complex",
+      "reasoning",
+      "speed"
+    ],
+    "supports_thai": true,
+    "endpoint": "https://openrouter.ai/api/v1/chat/completions"
+  },
+  "cloud_free_mistral": {
+    "id": "mistralai/mistral-7b-instruct:free",
+    "provider": "openrouter",
+    "engine": "openrouter",
+    "quant": "fp16",
+    "params": 7,
+    "ctx": 32768,
+    "cost_per_1k": 0.0,
+    "speed": "very_fast",
+    "strengths": [
+      "simple",
+      "fast",
+      "cheap"
+    ],
+    "supports_thai": false,
+    "endpoint": "https://openrouter.ai/api/v1/chat/completions"
+  },
+  "cloud_free_phi": {
+    "id": "microsoft/phi-3-medium-128k-instruct:free",
+    "provider": "openrouter",
+    "engine": "openrouter",
+    "quant": "fp16",
+    "params": 14,
+    "ctx": 128000,
+    "cost_per_1k": 0.0,
+    "speed": "fast",
+    "strengths": [
+      "long_context",
+      "reasoning"
+    ],
+    "supports_thai": false,
+    "endpoint": "https://openrouter.ai/api/v1/chat/completions"
+  }
+}
