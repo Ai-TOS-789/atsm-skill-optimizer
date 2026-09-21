@@ -22,3 +22,6 @@
 {"skill": "yes", "success": 1, "agent": "auto-skill-generator", "timestamp": "2026-09-21T00:15:08.490056+00:00", "note": "Auto-registered with neutral prior P(success)=0.5"}
 {"skill": "test-skill", "success": 1, "agent": "auto-skill-generator", "timestamp": "2026-09-21T00:15:39.047182+00:00", "note": "Auto-registered with neutral prior P(success)=0.5"}
 {"skill": "test-skill", "success": 1, "agent": "auto-skill-generator", "timestamp": "2026-09-21T00:17:10.570947+00:00", "note": "Auto-registered with neutral prior P(success)=0.5"}
+{"skill": "arxiv", "success": 1, "agent": "default", "timestamp": "2026-09-21T00:27:00.976142+00:00"}
+{"skill": "test-skill", "success": 1, "agent": "default", "timestamp": "2026-09-21T00:27:05.250148+00:00"}
+{"skill": "arxiv", "success": 1, "agent": "default", "timestamp": "2026-09-21T00:27:27.968280+00:00"}
